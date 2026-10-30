@@ -93,3 +93,20 @@ def grade(task: dict, final: str | None) -> Grade:
     if task["type"] == "intent":
         return grade_intent(final, task["answer"], task["choices"])
     raise ValueError(f"unknown task type: {task['type']}")
+
+
+def validate(task: dict, final: str | None) -> tuple[bool, str]:
+    """هل الجواب صالح لنوع المهمة؟ بدون معرفة الجواب الصحيح (يستخدمه الوكيل أثناء الحل).
+    يرجع (صالح؟، السبب)."""
+    if final is None or not final.strip():
+        return False, NO_FINAL
+    if task["type"] == "math":
+        nums = set(_numbers(final))
+        if not nums:
+            return False, INVALID
+        return (True, OK) if len(nums) == 1 else (False, AMBIGUOUS)
+    if task["type"] == "knowledge":
+        return (True, OK) if parse_letter(final, len(task["choices"])) else (False, INVALID)
+    if task["type"] == "intent":
+        return (True, OK) if normalize_label(final) in task["choices"] else (False, INVALID)
+    raise ValueError(f"unknown task type: {task['type']}")

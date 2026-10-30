@@ -4,3 +4,4 @@ pyyaml>=6.0          # read config.yaml
 python-dotenv>=1.0   # load GROQ_API_KEY from .env
 pytest>=8.0          # tests
 tenacity>=8.2         # retries with backoff (used by LiteLLM num_retries)
+langgraph>=1.0       # the KAYL agent graph (kayl/agent.py)
