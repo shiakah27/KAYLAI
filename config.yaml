@@ -73,6 +73,11 @@ floors:
   accuracy: 0.80        # min fraction of correct answers
   latency_p95_s: 15     # 95th-percentile seconds per task
 
+prompts:
+  # One short format example in the system prompt, ONLY for models without a separate
+  # reasoning channel (allam-2-7b). gpt-oss prompts never get it.
+  format_example: true
+
 generation:
   temperature: 0
   max_output_tokens: 2048   # default cap (free-tier friendly); a model can override it

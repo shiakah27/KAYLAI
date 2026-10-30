@@ -24,13 +24,40 @@ TASK_INSTRUCTIONS = {
 }
 
 
+# مثال قصير على الشكل، للنماذج بدون قناة تفكير (allam) فقط، لأنها لا تلتزم بالشكل بدونه.
+# المثال عام (ليس من بياناتنا)، وسطر THINKING فيه بلغة التفكير المطلوبة.
+FORMAT_EXAMPLES = {
+    "math": {
+        "en": "THINKING: 3 bags with 4 apples each is 3 * 4 = 12.",
+        "ar": "THINKING: ٣ أكياس في كل منها ٤ تفاحات، إذن ٣ × ٤ = ١٢.",
+        "rest": "ANSWER: عدد التفاحات ١٢.\nFINAL: 12",
+    },
+    "knowledge": {
+        "en": "THINKING: The capital of Saudi Arabia is Riyadh, which is option C.",
+        "ar": "THINKING: عاصمة السعودية هي الرياض، وهي الخيار C.",
+        "rest": "ANSWER: الجواب الصحيح هو الرياض.\nFINAL: C",
+    },
+    "intent": {
+        "en": "THINKING: The user asks about the weather, which is not a government service.",
+        "ar": "THINKING: المستخدم يسأل عن الطقس، وهذا ليس خدمة حكومية.",
+        "rest": "ANSWER: هذه الرسالة خارج الخدمات المتاحة.\nFINAL: other",
+    },
+}
+
+
+def format_example(task_type: str, think_lang: str) -> str:
+    ex = FORMAT_EXAMPLES[task_type]
+    return f"{ex[think_lang]}\n{ex['rest']}"
+
+
 def has_reasoning_channel(info: dict) -> bool:
     """النماذج التي تدعم مستوى التفكير (gpt-oss) تفكر في قناة منفصلة."""
     return bool(info.get("supports_reasoning_effort"))
 
 
-def system_prompt(task_type: str, think_lang: str, reasoning_channel: bool) -> str:
-    """تعليمات النظام: المهمة، ولغة التفكير، وشكل الجواب الصارم."""
+def system_prompt(task_type: str, think_lang: str, reasoning_channel: bool,
+                  with_example: bool = False) -> str:
+    """تعليمات النظام: المهمة، ولغة التفكير، وشكل الجواب الصارم (ومثال اختياري)."""
     lang = THINK_LANG_NAMES[think_lang]
     if reasoning_channel:
         thinking = f"Do all of your reasoning in {lang}."
@@ -38,9 +65,12 @@ def system_prompt(task_type: str, think_lang: str, reasoning_channel: bool) -> s
     else:
         thinking = f"First think step by step in {lang}, after 'THINKING:'."
         fmt = f"THINKING: <your reasoning in {lang}>\nANSWER: <one short sentence in Arabic>\nFINAL: <answer>"
-    return (f"{TASK_INSTRUCTIONS[task_type]}\n\n"
-            f"{thinking} Always write the ANSWER line in Arabic.\n"
-            f"Reply in exactly this format, and make FINAL the last line:\n{fmt}")
+    prompt = (f"{TASK_INSTRUCTIONS[task_type]}\n\n"
+              f"{thinking} Always write the ANSWER line in Arabic.\n"
+              f"Reply in exactly this format, and make FINAL the last line:\n{fmt}")
+    if with_example and not reasoning_channel:
+        prompt += f"\n\nExample of a correct reply:\n{format_example(task_type, think_lang)}"
+    return prompt
 
 
 def user_prompt(task: dict) -> str:
@@ -53,9 +83,10 @@ def user_prompt(task: dict) -> str:
     return task["question"]
 
 
-def build_messages(task: dict, think_lang: str, info: dict) -> list[dict]:
+def build_messages(task: dict, think_lang: str, info: dict, with_example: bool = False) -> list[dict]:
     """الرسائل الكاملة لاستدعاء واحد."""
+    system = system_prompt(task["type"], think_lang, has_reasoning_channel(info), with_example)
     return [
-        {"role": "system", "content": system_prompt(task["type"], think_lang, has_reasoning_channel(info))},
+        {"role": "system", "content": system},
         {"role": "user", "content": user_prompt(task)},
     ]

@@ -22,7 +22,7 @@ from dotenv import load_dotenv
 from kayl import metrics
 from kayl.cache import DiskCache, cache_key
 from kayl.config import fits_context, max_output_tokens, model_info
-from kayl.language import detect_lang
+from kayl.language import detect_lang, strip_copied
 from kayl.parsing import parse_answer, parse_final, parse_thinking
 from kayl.prompts import build_messages, has_reasoning_channel
 
@@ -96,8 +96,9 @@ def _request(model_id: str, params: dict, messages: list[dict], retry_cfg: dict)
 
 
 def call_model(cfg: dict, task: dict, model: str, effort: str | None, think_lang: str,
-               cache: DiskCache | None = None) -> CallResult:
-    """استدعاء واحد لمهمة واحدة. لا يرمي استثناء: الأخطاء تُسجل في result.error."""
+               cache: DiskCache | None = None, format_example: bool | None = None) -> CallResult:
+    """استدعاء واحد لمهمة واحدة. لا يرمي استثناء: الأخطاء تُسجل في result.error.
+    format_example: None = القيمة من config.yaml (prompts.format_example)."""
     import litellm
 
     info = model_info(cfg, model)
@@ -106,7 +107,9 @@ def call_model(cfg: dict, task: dict, model: str, effort: str | None, think_lang
     result = CallResult(task_id=task["id"], task_type=task["type"], model=model,
                         effort=effort, think_lang=think_lang)
 
-    messages = build_messages(task, think_lang, info)
+    if format_example is None:
+        format_example = cfg["prompts"]["format_example"]
+    messages = build_messages(task, think_lang, info, with_example=format_example)
     result.est_prompt_tokens = litellm.token_counter(model=info["litellm_id"], messages=messages)
     if not fits_context(cfg, model, result.est_prompt_tokens):
         result.skipped, result.error = True, "context_too_long"
@@ -132,12 +135,13 @@ def call_model(cfg: dict, task: dict, model: str, effort: str | None, think_lang
                   "created": datetime.now(timezone.utc).isoformat()}
         cache.put(key, record)
 
-    _fill_from_response(result, record, info)
+    _fill_from_response(result, record, info, messages[-1]["content"])
     return result
 
 
-def _fill_from_response(result: CallResult, record: dict, info: dict) -> None:
-    """يملأ النتيجة من الرد الخام (من الـ API أو من الكاش، بنفس الطريقة)."""
+def _fill_from_response(result: CallResult, record: dict, info: dict, source_text: str) -> None:
+    """يملأ النتيجة من الرد الخام (من الـ API أو من الكاش، بنفس الطريقة).
+    source_text = نص السؤال كما أرسلناه، لنحذف ما نسخه النموذج منه."""
     raw = record["response"]
     choice = raw["choices"][0]
     message = choice["message"]
@@ -159,7 +163,8 @@ def _fill_from_response(result: CallResult, record: dict, info: dict) -> None:
     result.answer_text = parse_answer(result.content)
     result.final = parse_final(result.content)
 
-    result.reasoning_lang = detect_lang(result.reasoning)
+    # نحذف ما نُسخ من السؤال قبل كشف اللغة (انظر kayl/language.py)
+    result.reasoning_lang = detect_lang(strip_copied(result.reasoning, source_text))
     result.think_lang_followed = result.reasoning_lang == result.think_lang
     result.answer_in_arabic = detect_lang(result.answer_text) == "ar"
 
