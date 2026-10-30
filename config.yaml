@@ -3,28 +3,34 @@
 
 provider: groq
 
-# Prices are USD per 1M tokens, from Groq's published list.
-# VERIFY at https://groq.com/pricing before reporting final results — prices change.
+# Prices are USD per 1M tokens.
+# Source: https://groq.com/pricing (Groq official pricing page)
 prices_checked_on: "2026-10-30"
 
 models:
   llama-3.1-8b-instant:
     litellm_id: groq/llama-3.1-8b-instant
     size: small
+    # UNVERIFIED: not yet confirmed on Groq's official page.
     input_price: 0.05
     output_price: 0.08
+    price_verified: false
     supports_reasoning_effort: false   # no thinking control on this model
   openai/gpt-oss-20b:
     litellm_id: groq/openai/gpt-oss-20b
     size: medium
+    # Verified 2026-10-30 at https://groq.com/pricing
     input_price: 0.075
     output_price: 0.30
+    price_verified: true
     supports_reasoning_effort: true    # low / medium / high
   openai/gpt-oss-120b:
     litellm_id: groq/openai/gpt-oss-120b
     size: large
+    # Verified 2026-10-30 at https://groq.com/pricing
     input_price: 0.15
     output_price: 0.60
+    price_verified: true
     supports_reasoning_effort: true
 
 reasoning_efforts: [low, medium, high]
@@ -33,9 +39,10 @@ reasoning_efforts: [low, medium, high]
 think_languages: [ar, en]
 
 # A configuration only "counts" if it meets both floors.
-# These are STARTING VALUES, not measured. Plan: after baseline A (largest model)
-# runs on calibration, set the accuracy floor relative to it and document why.
+# INITIAL VALUES — not measured. They will be set from baseline A
+# (largest model on calibration data), and the reason will be documented.
 floors:
+  status: initial   # change to "set_from_baseline_A" once measured
   accuracy: 0.80        # min fraction of correct answers
   latency_p95_s: 15     # 95th-percentile seconds per task
 
