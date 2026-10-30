@@ -1,76 +1,76 @@
 ﻿text,intent,dialect,human_reviewed
-كيف اجدد هويتي المنتهية,renew_national_id,msa,false
-هل يمكن تجديد الهوية اون لاين,renew_national_id,msa,false
-موعد انتهاء هويتي قريب ابي اجددها,renew_national_id,msa,false
-طريقة تجديد البطاقة الوطنية,renew_national_id,msa,false
+بطاقتي تنتهي بعد أسبوع كيف أجدد؟,renew_national_id,msa,false
+أريد تجديد هويتي الوطنية الآن,renew_national_id,msa,false
+هل يمكن تجديد الهوية إلكترونيًا؟,renew_national_id,msa,false
+كيف أدفع رسوم تجديد البطاقة؟,renew_national_id,msa,false
 وش اسوي لتجديد الهويه اللي قربت تنتهي,renew_national_id,saudi,false
 ابغى اجدد بطاقتي الحين وين اسوي,renew_national_id,saudi,false
 هويتي انتهت امس كيف اسوي التجديد,renew_national_id,saudi,false
 ابغي اعرف خطوات تجديد الهويه الوطنيه,renew_national_id,saudi,false
-كيف اجدد جوازي المنتهي,renew_passport,msa,false
-جوازي قرب ينتهي وش اسوي,renew_passport,msa,false
-اريد تجديد جواز السفر,renew_passport,msa,false
-خطوات تجديد الجواز ايش,renew_passport,msa,false
+كيف اجدد جواز السفر المنتهي؟,renew_passport,msa,false
+اريد تجديد جواز السفر قبل انتهاء صلاحيته,renew_passport,msa,false
+متى يمكنني تجديد جواز السفر؟,renew_passport,msa,false
+كيف ادفع رسوم تجديد الجواز؟,renew_passport,msa,false
 وش اسوي لتجديد جواز السفر الحين,renew_passport,saudi,false
 ابغى اعرف خطوات تجديد الجواز المنتهي,renew_passport,saudi,false
 كيف اسوي تجديد جواز السفر من الجوال,renew_passport,saudi,false
 وين ادخل عشان اجدد جواز السفر,renew_passport,saudi,false
-كيف ادفع مخالفاتي المروريه,traffic_violation_inquiry,msa,false
-عندي مخالفات ما اعرف كم قيمتها,traffic_violation_inquiry,msa,false
-وين اشوف تفاصيل المخالفات,traffic_violation_inquiry,msa,false
-كيف اسدد غرامه المرور,traffic_violation_inquiry,msa,false
+كيف ادفع المخالفات المرورية من الجوال,traffic_violation_inquiry,msa,false
+لا اعرف كيف اسدد المخالفة,traffic_violation_inquiry,msa,false
+هل يمكن سداد المخالفة عبر التطبيق,traffic_violation_inquiry,msa,false
+اريد الاستعلام عن المخالفات المرورية,traffic_violation_inquiry,msa,false
 وش عدد المخالفات علي الحين؟,traffic_violation_inquiry,saudi,false
 ابغى اسدد مخالفة مرورية كيف اسوي؟,traffic_violation_inquiry,saudi,false
 وين ادفع الغرامات المرورية؟,traffic_violation_inquiry,saudi,false
 ليش ما تظهر مخالفاتي في التطبيق؟,traffic_violation_inquiry,saudi,false
-كيف انقل ملكية سيارتي للمشتري,vehicle_ownership_transfer,msa,false
-ايش المطلوب لنقل ملكية سيارة مستعملة,vehicle_ownership_transfer,msa,false
-هل ينقل الملكية اون لاين ولا لازم اروح,vehicle_ownership_transfer,msa,false
-كم رسوم نقل ملكية السيارة,vehicle_ownership_transfer,msa,false
+كيف انقل ملكية السيارة للمشتري؟,vehicle_ownership_transfer,msa,false
+أريد معرفة رسوم نقل الملكية,vehicle_ownership_transfer,msa,false
+هل يمكن نقل الملكية عن بعد؟,vehicle_ownership_transfer,msa,false
+ما هي الأوراق المطلوبة للبيع؟,vehicle_ownership_transfer,msa,false
 كيف اسوي نقل ملكية سيارتي الحين,vehicle_ownership_transfer,saudi,false
 ابغى اعرف رسوم نقل الملكية,vehicle_ownership_transfer,saudi,false
 وش المستندات المطلوبة لبيع سيارتي,vehicle_ownership_transfer,saudi,false
 وين اسوي نقل الملكية اون لاين,vehicle_ownership_transfer,saudi,false
 كيف احجز موعد في المركز الصحي,book_medical_appointment,msa,false
-ابغى اسوي موعد عند الدكتور,book_medical_appointment,msa,false
-وين اجدد موعد المستشفى,book_medical_appointment,msa,false
-احجز لي موعد فحص دم,book_medical_appointment,msa,false
+اريد حجز موعد طبي عاجل,book_medical_appointment,msa,false
+لماذا لا يظهر خيار الحجز,book_medical_appointment,msa,false
+هل يمكنني تغيير موعد المستشفى,book_medical_appointment,msa,false
 ابغى احجز موعد في المركز الصحي الحين,book_medical_appointment,saudi,false
 كيف اسوي حجز مستشفى حكومي؟,book_medical_appointment,saudi,false
 وش اسوي عشان احجز موعد طبي,book_medical_appointment,saudi,false
 ابغى موعد في العياده العامه,book_medical_appointment,saudi,false
-الكهرباء مقطوعه من الصبح,report_utility_outage,msa,false
-ما في ماء في البيت,report_utility_outage,msa,false
-انقطع التيار الكهربائي فجأه,report_utility_outage,msa,false
-الماء ما جاي من ساعتين,report_utility_outage,msa,false
+انقطع الماء عن بيتنا منذ الصباح,report_utility_outage,msa,false
+لا يوجد كهرباء في الحي منذ ساعتين,report_utility_outage,msa,false
+أريد الإبلاغ عن انقطاع التيار الكهربائي,report_utility_outage,msa,false
+الماء مقطوع عن المنزل بالكامل,report_utility_outage,msa,false
 وش اسوي الكهرباء انقطعت من الصبح,report_utility_outage,saudi,false
 ابغى ابلاغ عن انقطاع الماء في الحي,report_utility_outage,saudi,false
 ليش ما فيه كهرباء الحين عندنا,report_utility_outage,saudi,false
 الماء مقطوع من امس وين الحل,report_utility_outage,saudi,false
-هل طلبي في حساب المواطن معلق ليش؟,social_support_inquiry,msa,false
-متى يصرف راتب الضمان الاجتماعي هذا الشهر؟,social_support_inquiry,msa,false
-كيف اعرف اني مؤهل للبرنامج؟,social_support_inquiry,msa,false
-طلبي مرفوض بدون سبب واضح,social_support_inquiry,msa,false
+متى يصرف دعم حساب المواطن هذا الشهر,social_support_inquiry,msa,false
+لماذا رفضت أهليتي في الضمان الاجتماعي,social_support_inquiry,msa,false
+أريد معرفة حالة طلب حساب المواطن,social_support_inquiry,msa,false
+متى يتم تحديث بيانات الضمان الاجتماعي,social_support_inquiry,msa,false
 وش سبب رفض أهليتي في حساب المواطن؟,social_support_inquiry,saudi,false
 وين أطلع موعد صرف الضمان الاجتماعي؟,social_support_inquiry,saudi,false
-ابغى اعرف حالة طلبي الحين,social_support_inquiry,saudi,false
+ابغى اعرف حالة طلبي الحين,other,saudi,false
 كيف اسوي تحديث بياناتي في حساب المواطن؟,social_support_inquiry,saudi,false
-موظف الاستقبال كان قاسي معي,file_complaint,msa,false
-انتظرت ساعتين وما نزلت دوري,file_complaint,msa,false
-الخدمة بطيئة جداً في الفرع,file_complaint,msa,false
-رفضوا قبول طلبي بدون سبب,file_complaint,msa,false
+تأخرت المعاملة عندي شهر كامل بدون سبب,file_complaint,msa,false
+الموظف رفض استلام الورقة وقال تعال غدا,file_complaint,msa,false
+الموقع لا يعمل منذ الصباح ولا أحد يرد,file_complaint,msa,false
+أريد شكوى على الموظف بسبب سوء التعامل,file_complaint,msa,false
 وش اسوي مع الموظف اللي ما يرد علي,file_complaint,saudi,false
 ابغى اشكي على التأخير في المعامله مره,file_complaint,saudi,false
 ليش ما يخلصون الورقه من شهرين,file_complaint,saudi,false
-ابغا اعرف وين ملفي الحين,file_complaint,saudi,false
+ابغا اعرف وين ملفي الحين,other,saudi,false
 السلام عليكم كيف حالك اليوم,other,msa,false
-الطقس غدا هل ينزل المطر,other,msa,false
-مين رابح مباراة الهلال والاهلي,other,msa,false
-وش اطبخ اليوم عشان العشاء,other,msa,false
-احكيلي نكته تضحكني شوي,other,msa,false
-كم يساوي كيلو الدجاج الان,other,msa,false
-ليش السماء زرقاء اللون,other,msa,false
-وين اقرب مقهى قهوة,other,msa,false
+ما هو الطقس المتوقع في الرياض غداً,other,msa,false
+هل شاهدت مباراة الهلال الأخيرة,other,msa,false
+كيف اطبخ كبسة لحم سريعة,other,msa,false
+ما هي عاصمة دولة اليابان,other,msa,false
+لماذا السماء زرقاء اللون,other,msa,false
+كم عدد أيام السنة الميلادية,other,msa,false
+ما هو أسرع حيوان في العالم,other,msa,false
 وش طقس الرياض الحين,other,saudi,false
 وين تشوف الهلال في الكلاسيكو,other,saudi,false
 كيف اسوي كبسة على نار هادئة,other,saudi,false

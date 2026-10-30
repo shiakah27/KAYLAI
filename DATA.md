@@ -92,7 +92,7 @@ As a result, all 21 subjects appear in both calibration and test, with 1–2 que
 | Generation model | `groq/qwen/qwen3.8-27b` (via LiteLLM) |
 | Parameters | `temperature=0`, `reasoning_effort="none"` (thinking mode off), `max_tokens=800`, JSON response format |
 | Generated on | 2026-10-30 |
-| Generation tokens | 4,282 input + 1,756 output (final run). The price of qwen3.8-27b is not verified, so no cost is stated. |
+| Generation tokens | 5,056 input + 1,760 output (the totals logged for all 18 prompts in the final run). The price of qwen3.8-27b is not verified, so no cost is stated. |
 | Size | 8 intents × 2 dialects × 4 + `other` × 2 dialects × 8 = **80 messages**, all unique |
 | File | `data/synthetic/intents.csv`, with columns `text, intent, dialect, human_reviewed` (UTF-8 with BOM, so Excel shows the Arabic correctly) |
 | Grading | The correct label, which must exactly match one of the 9 labels |
@@ -121,10 +121,13 @@ As a result, all 21 subjects appear in both calibration and test, with 1–2 que
 | `file_complaint` | تقديم شكوى على جهة حكومية أو موظف بسبب سوء خدمة أو تأخير |
 | `other` | رسائل لا علاقة لها بأي خدمة حكومية: سلام وتحية، الطقس، كرة القدم، وصفات أكل، نكت، أسئلة عامة عشوائية |
 
+**Grading definition of `other`.** For grading, `other` is broader than the prompt used to generate it. It means **any message that does not fit one of the 8 intents**: off-topic chat *and* requests too vague to route (for example, "I want to know the status of my request", with no service named). This is the usual meaning of an out-of-scope class, and a real chatbot would answer such a message with a clarifying question.
+
 Compared with version 1, we removed `renew_driving_license` because it was too close to the other two `renew_*` intents. We also removed `exit_reentry_visa`, and we added `other`.
 
 **The 2 dialects, as described to the generator:**
-- `msa`: فصحى بسيطة كما يكتبها الناس العاديون، ليست رسمية ولا بلغة المعاملات الحكومية. مثال على الأسلوب: «كيف أجدد جوازي؟» وليس «أرجو التكرم بإفادتي عن إجراءات التجديد»
+- `msa` (version 2b, current): فصحى بسيطة وصحيحة، كما يكتبها شخص متعلم في رسالة سريعة. كل الكلمات فصيحة، ولا كلمة عامية واحدة. ممنوع استخدام: ابي، ابغى، وش، ايش، وين، ليش، الحين، اسوي، مره، عشان، ما في، مين، شلون. وليست رسمية ولا بلغة المعاملات الحكومية. أمثلة على الأسلوب المطلوب: «كيف أدفع المخالفة؟» «أريد معرفة موعد صرف الدعم» «لماذا لا يعمل الموقع؟» «انقطع الماء عن منزلنا منذ الصباح». وليس: «أرجو التكرم بإفادتي عن الإجراءات»
+  - Version 2 of this description was "فصحى بسيطة كما يكتبها الناس العاديون، ليست رسمية ولا بلغة المعاملات الحكومية. مثال على الأسلوب: «كيف أجدد جوازي؟» وليس «أرجو التكرم بإفادتي عن إجراءات التجديد»". It produced colloquial or Saudi text in many `msa` rows, so it was replaced. Only the `msa` rows were regenerated. The `saudi` prompts did not change and were served from the response cache, and we checked that all 40 `saudi` rows are identical to before.
 - `saudi`: لهجة سعودية حقيقية يومية كما يكتبها الناس في الواتساب. استخدم كلمات مثل: ابي، ابغى، ابغا، وش، كيف اسوي، ودي، ليش، الحين، وين، مره، يعطيك العافية
 
 **Generation prompt.** The template is used once for each (label, dialect) pair, which makes 18 calls. Here it is verbatim:
@@ -154,16 +157,26 @@ Compared with version 1, we removed `renew_driving_license` because it was too c
 - For `other`, 3 MSA + 3 Saudi go to each split.
 - Each split therefore has 30 messages: 15 MSA, 15 Saudi, 3 per intent and 6 `other`. Of the 80 messages, 20 are not used.
 
+**Manual relabels.** These are applied in code (`RELABELS` in `generate_intents.py`), so they are reproducible:
+
+| Text | Generated as | Relabeled to | Why |
+|---|---|---|---|
+| `ابغا اعرف وين ملفي الحين` | `file_complaint` | `other` | A status question that names no service. It is not a complaint. |
+| `ابغى اعرف حالة طلبي الحين` | `social_support_inquiry` | `other` | Names no service, so it cannot be routed to any of the 8 intents |
+
+A third problem row (`رفضوا قبول طلبي بدون سبب`, `file_complaint`, which was almost identical to a `social_support_inquiry` row) was an `msa` row. It disappeared when the `msa` rows were regenerated.
+After the relabels, the class counts are 8 per intent, except `file_complaint` and `social_support_inquiry`, which have 7 each, and `other`, which has 18.
+
 **Automated pre-check (by Claude Code, not a human review):**
-- Message length is 4–8 words, with an average of 5.4. Every message is within the 4–15 rule, but none is long.
-- 69 of 80 messages have no final punctuation.
+- Every message is 4–8 words long, so all are within the 4–15 rule, but none is long.
+- 0 of 40 `msa` rows contain any of the banned dialect words. In version 2, most of them did.
 - 38 of 40 `saudi` messages contain a common Saudi word.
-- **Problem: many `msa` messages are actually colloquial or Saudi.** Examples: `موعد انتهاء هويتي قريب ابي اجددها`, `جوازي قرب ينتهي وش اسوي`, `وش اطبخ اليوم عشان العشاء`. The generator interpreted "simple, not formal" as dialect, so the `dialect` column is not reliable for `msa` rows.
-- **Labels that look ambiguous or wrong:**
-  - `ابغا اعرف وين ملفي الحين` is labeled `file_complaint`, but it reads like a status question, not a complaint.
-  - `طلبي مرفوض بدون سبب واضح` (`social_support_inquiry`) and `رفضوا قبول طلبي بدون سبب` (`file_complaint`) are nearly the same message with different labels.
-  - `ابغى اعرف حالة طلبي الحين` (`social_support_inquiry`) does not mention which service it is about.
-  - `وين اجدد موعد المستشفى` (`book_medical_appointment`) uses the word اجدد ("renew"), which could confuse a model with the `renew_*` intents.
+- **Still borderline:**
+  - `ما هي الأوراق المطلوبة للبيع؟` (`vehicle_ownership_transfer`) doesn't say what is being sold.
+  - `لماذا لا يظهر خيار الحجز` (`book_medical_appointment`) doesn't name the service.
+  - `الموقع لا يعمل منذ الصباح ولا أحد يرد` (`file_complaint`) could be read as a technical-support request.
+
+  These are left for the human review.
 
 **Human review: pending.** All rows have `human_reviewed = false`.
 To review, edit `intents.csv` by hand (fix `text`, `intent` or `dialect`, and set `human_reviewed` to `true`), then run `python prepare_data.py` again.
