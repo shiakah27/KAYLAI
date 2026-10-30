@@ -84,6 +84,19 @@ generation:
 
 runs_per_experiment: 2
 
+# Step 5: every fixed configuration on ALL calibration items (learning data only).
+# think_lang is varied only on gpt-oss-20b medium. "allam-noex" measures the format example.
+sweep:
+  - {name: allam,          model: allam-2-7b,          effort: null,   think_lang: en, format_example: true}
+  - {name: allam-noex,     model: allam-2-7b,          effort: null,   think_lang: en, format_example: false}
+  - {name: 20b-low,        model: openai/gpt-oss-20b,  effort: low,    think_lang: en}
+  - {name: 20b-medium,     model: openai/gpt-oss-20b,  effort: medium, think_lang: en}
+  - {name: 20b-high,       model: openai/gpt-oss-20b,  effort: high,   think_lang: en}
+  - {name: 20b-medium-ar,  model: openai/gpt-oss-20b,  effort: medium, think_lang: ar}
+  - {name: 120b-low,       model: openai/gpt-oss-120b, effort: low,    think_lang: en}
+  - {name: 120b-medium,    model: openai/gpt-oss-120b, effort: medium, think_lang: en}
+  - {name: 120b-high,      model: openai/gpt-oss-120b, effort: high,   think_lang: en}
+
 # Retries with backoff on rate limits and temporary errors (free tier).
 # Wait = what Groq says ("try again in Xs"), else base_wait_s × 2^attempt, capped at max_wait_s.
 retries:
@@ -91,7 +104,13 @@ retries:
   base_wait_s: 2
   max_wait_s: 60
 
-# Used if a call errors after retries.
+# The KAYL agent (kayl/agent.py): on a failed verification, first raise effort,
+# then move to the bigger model; at most this many escalations per task.
+agent:
+  max_escalations: 2
+  min_calibration_n: 20   # ignore a configuration measured on fewer items (e.g. an interrupted sweep)
+
+# Used if a call errors after retries, and by the agent when a task type has no calibration data.
 fallback_model: openai/gpt-oss-20b
 
 paths:

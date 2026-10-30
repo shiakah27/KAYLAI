@@ -67,12 +67,17 @@ def _retryable_errors():
             litellm.ServiceUnavailableError, litellm.InternalServerError)
 
 
+class DailyLimitError(RuntimeError):
+    """وصلنا الحد اليومي لهذا النموذج: الانتظار دقيقة لا يفيد، نتوقف ونكمل لاحقًا من الكاش."""
+
+
 def _wait_seconds(error: Exception, attempt: int, retry_cfg: dict) -> float:
-    """كم ننتظر قبل المحاولة التالية: ما يقوله Groq ("try again in 1.2s") إن وُجد،
+    """كم ننتظر قبل المحاولة التالية: ما يقوله Groq ("try again in 1.2s" أو "1m26.4s") إن وُجد،
     وإلا انتظار يتضاعف (2، 4، 8...) حتى حد أقصى."""
-    m = re.search(r"try again in ([\d.]+)(ms|s)", str(error))
+    m = re.search(r"try again in (?:(\d+)m)?([\d.]+)(ms|s)", str(error))
     if m:
-        wait = float(m.group(1)) / (1000 if m.group(2) == "ms" else 1)
+        minutes = int(m.group(1) or 0)
+        wait = minutes * 60 + float(m.group(2)) / (1000 if m.group(3) == "ms" else 1)
         return min(wait + 0.5, retry_cfg["max_wait_s"])
     return min(retry_cfg["base_wait_s"] * 2 ** attempt, retry_cfg["max_wait_s"])
 
@@ -87,6 +92,8 @@ def _request(model_id: str, params: dict, messages: list[dict], retry_cfg: dict)
             resp = litellm.completion(model=model_id, messages=messages, **params)
             return resp.model_dump(), time.perf_counter() - start
         except retryable as e:
+            if isinstance(e, litellm.RateLimitError) and "per day" in str(e):
+                raise DailyLimitError(str(e)[:300]) from e
             if attempt == retry_cfg["max_attempts"] - 1:
                 raise
             wait = _wait_seconds(e, attempt, retry_cfg)
@@ -128,6 +135,8 @@ def call_model(cfg: dict, task: dict, model: str, effort: str | None, think_lang
     else:
         try:
             raw, latency = _request(info["litellm_id"], params, messages, cfg["retries"])
+        except DailyLimitError:
+            raise  # يوقف التجربة لهذا النموذج؛ ما تم محفوظ في الكاش
         except Exception as e:  # بعد كل المحاولات: نسجل الخطأ ولا نوقف التجربة
             result.error = f"{type(e).__name__}: {str(e)[:300]}"
             return result

@@ -113,3 +113,20 @@ def test_error_after_all_retries_is_recorded(monkeypatch, tmp_path):
     monkeypatch.setattr(client.time, "sleep", lambda s: None)
     r = client.call_model(CFG, TASK, "openai/gpt-oss-20b", "low", "en", cache=DiskCache(tmp_path))
     assert r.error.startswith("RateLimitError") and r.final is None
+
+
+def test_wait_parses_minutes_and_ms():
+    cfg = {"base_wait_s": 2, "max_wait_s": 600}
+    assert client._wait_seconds(Exception("Please try again in 1m26.4s"), 0, cfg) == pytest.approx(86.9)
+    assert client._wait_seconds(Exception("Please try again in 547ms"), 0, cfg) == pytest.approx(1.047)
+    assert client._wait_seconds(Exception("no hint"), 2, cfg) == 8
+
+
+def test_daily_limit_stops_instead_of_waiting(monkeypatch, tmp_path):
+    def daily(model, messages, **params):
+        raise litellm.RateLimitError("Rate limit reached on tokens per day (TPD): Limit 200000",
+                                     llm_provider="groq", model=model)
+
+    monkeypatch.setattr(litellm, "completion", daily)
+    with pytest.raises(client.DailyLimitError):
+        client.call_model(CFG, TASK, "openai/gpt-oss-20b", "low", "en", cache=DiskCache(tmp_path))
