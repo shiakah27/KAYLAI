@@ -32,6 +32,8 @@ import re
 from collections import defaultdict
 from pathlib import Path
 
+from kayl.normalize import normalize_number  # نفس الدالة التي يستخدمها المصحح
+
 GSM8K_AR = "Omartificial-Intelligence-Space/Arabic-gsm8k"
 GSM8K_EN = "openai/gsm8k"
 MMLU_AR = "MBZUAI/ArabicMMLU"
@@ -44,23 +46,6 @@ N_ROBUSTNESS_EN = 20
 OUT = Path("data")
 
 LETTERS = "ABCDE"
-
-# تحويل الأرقام العربية-الهندية (٠١٢...) إلى أرقام لاتينية (012...)
-ARABIC_DIGITS = str.maketrans("٠١٢٣٤٥٦٧٨٩", "0123456789")
-
-
-def normalize_number(text: str) -> str | None:
-    """يحول نصًا إلى رقم موحد: يزيل الفواصل، ويحول الأرقام العربية، ويحذف .0 الزائدة."""
-    if text is None:
-        return None
-    t = text.translate(ARABIC_DIGITS).replace(",", "").replace("٬", "").strip()
-    m = re.search(r"-?\d+(?:\.\d+)?", t)
-    if not m:
-        return None
-    num = m.group(0)
-    if "." in num:
-        num = num.rstrip("0").rstrip(".")
-    return num
 
 
 def final_answer(answer_field: str) -> str | None:

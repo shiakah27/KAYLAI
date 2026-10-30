@@ -79,6 +79,13 @@ generation:
 
 runs_per_experiment: 2
 
+# Retries with backoff on rate limits and temporary errors (free tier).
+# Wait = what Groq says ("try again in Xs"), else base_wait_s × 2^attempt, capped at max_wait_s.
+retries:
+  max_attempts: 6
+  base_wait_s: 2
+  max_wait_s: 60
+
 # Used if a call errors after retries.
 fallback_model: openai/gpt-oss-20b
 
