@@ -40,6 +40,9 @@ models:
     price_verified: true
     active_params_b: 5.1               # MoE; source: https://huggingface.co/blog/welcome-openai-gpt-oss
     context_window: 131072
+    # high effort needs more room: at 2048 tokens, 20b-high was cut off in 19/90 calls.
+    # Only 120b gets the bigger cap (it has its own daily quota; 20b's was used up).
+    max_output_tokens_by_effort: {high: 8192}
     supports_reasoning_effort: true
 
 # PRIMARY metric: estimated compute per successful task.
@@ -63,15 +66,20 @@ context_check:
 reasoning_efforts: [low, medium, high]
 
 # Language the model reasons in. The final answer is always in Arabic.
+# Thinking in Arabic was STOPPED: gpt-oss-20b reasoned in English in 32/32 calls when asked
+# for Arabic (see RESULTS.md). The key is kept for models that may follow it.
 think_languages: [ar, en]
 
 # A configuration only "counts" if it meets both floors.
-# INITIAL VALUES — not measured. They will be set from baseline A
-# (largest model on calibration data), and the reason will be documented.
+# Accuracy floor PER TASK TYPE = baseline A's calibration accuracy minus 3.3 points,
+# i.e. one question fewer than baseline A (with n = 30, one question = 3.33 points).
+# Baseline A = gpt-oss-120b at its default effort (medium), sweep config "120b-medium".
 floors:
-  status: initial   # change to "set_from_baseline_A" once measured
-  accuracy: 0.80        # min fraction of correct answers
-  latency_p95_s: 15     # 95th-percentile seconds per task
+  status: set_from_baseline_A
+  baseline_config: 120b-medium
+  accuracy_margin_questions: 1   # = 3.3 points at n = 30
+  accuracy: 0.80                 # used ONLY if baseline A has no data for a task type
+  latency_p95_s: 15              # 95th-percentile seconds per task
 
 prompts:
   # One short format example in the system prompt, ONLY for models without a separate
@@ -85,17 +93,19 @@ generation:
 runs_per_experiment: 2
 
 # Step 5: every fixed configuration on ALL calibration items (learning data only).
-# think_lang is varied only on gpt-oss-20b medium. "allam-noex" measures the format example.
+# "allam-noex" measures the format example. 20b-medium-ar (think in Arabic) was stopped:
+# its 32 results are kept in results/think_lang_ar_stopped.jsonl.
 sweep:
   - {name: allam,          model: allam-2-7b,          effort: null,   think_lang: en, format_example: true}
   - {name: allam-noex,     model: allam-2-7b,          effort: null,   think_lang: en, format_example: false}
   - {name: 20b-low,        model: openai/gpt-oss-20b,  effort: low,    think_lang: en}
   - {name: 20b-medium,     model: openai/gpt-oss-20b,  effort: medium, think_lang: en}
-  - {name: 20b-high,       model: openai/gpt-oss-20b,  effort: high,   think_lang: en}
-  - {name: 20b-medium-ar,  model: openai/gpt-oss-20b,  effort: medium, think_lang: ar}
+  - {name: 20b-high,       model: openai/gpt-oss-20b,  effort: high,   think_lang: en,
+     note: "TRUNCATED: max 2048 output tokens; 19/90 replies cut off before FINAL"}
   - {name: 120b-low,       model: openai/gpt-oss-120b, effort: low,    think_lang: en}
   - {name: 120b-medium,    model: openai/gpt-oss-120b, effort: medium, think_lang: en}
-  - {name: 120b-high,      model: openai/gpt-oss-120b, effort: high,   think_lang: en}
+  - {name: 120b-high,      model: openai/gpt-oss-120b, effort: high,   think_lang: en,
+     note: "max 8192 output tokens"}
 
 # Retries with backoff on rate limits and temporary errors (free tier).
 # Wait = what Groq says ("try again in Xs"), else base_wait_s × 2^attempt, capped at max_wait_s.

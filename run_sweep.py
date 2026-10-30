@@ -86,7 +86,8 @@ def markdown(table: dict, configs: list[dict]) -> str:
                 continue
             comp = "n/a" if s["compute_per_success"] is None else f"{s['compute_per_success'] / 1e12:.2f}"
             lat = "n/a" if s["avg_latency_s"] is None else f"{s['avg_latency_s']:.2f}"
-            lines.append(f"| {c['name']} | {s['correct']}/{s['n']} ({100 * s['correct'] / s['n']:.0f}%) "
+            name = f"{c['name']} — {c['note']}" if c.get("note") else c["name"]
+            lines.append(f"| {name} | {s['correct']}/{s['n']} ({100 * s['correct'] / s['n']:.0f}%) "
                          f"| {comp} | {lat} | {s['format_failures']} | {s['truncated']} "
                          f"| {s['think_lang_followed']}/{s['n']} "
                          f"| {s['avg_input_tokens']:.0f} / {s['avg_output_tokens']:.0f} |")

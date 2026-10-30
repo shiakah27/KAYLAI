@@ -118,12 +118,12 @@ def call_model(cfg: dict, task: dict, model: str, effort: str | None, think_lang
         format_example = cfg["prompts"]["format_example"]
     messages = build_messages(task, think_lang, info, with_example=format_example)
     result.est_prompt_tokens = litellm.token_counter(model=info["litellm_id"], messages=messages)
-    if not fits_context(cfg, model, result.est_prompt_tokens):
+    if not fits_context(cfg, model, result.est_prompt_tokens, effort):
         result.skipped, result.error = True, "context_too_long"
         return result
 
     params = {"temperature": cfg["generation"]["temperature"],
-              "max_tokens": max_output_tokens(cfg, model)}
+              "max_tokens": max_output_tokens(cfg, model, effort)}
     if effort is not None:
         params["reasoning_effort"] = effort
 

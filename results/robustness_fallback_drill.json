@@ -1,0 +1,310 @@
+{
+  "run_id": "bd8109a5",
+  "started_riyadh": "2026-10-30T22:25:54+03:00",
+  "items": 5,
+  "pool_positions": [
+    60,
+    61,
+    62,
+    63,
+    64
+  ],
+  "correct": 3,
+  "tasks_with_fallback": 0,
+  "verified": 5,
+  "total_compute_flops": 17719200000000.0,
+  "records": [
+    {
+      "task_id": "gsm8k-ar-1048",
+      "task_type": "math",
+      "final": "9861",
+      "answer_text": "سعر السيارة في عام 2010 هو 9861 دولار",
+      "verified": true,
+      "escalations": 0,
+      "fallbacks": [],
+      "decisions": [
+        {
+          "step": "estimate",
+          "reason": "task type 'math' is given by the task; calibration profile has 8 configurations measured on up to 30 items"
+        },
+        {
+          "step": "choose",
+          "reason": "chose 20b-low: lowest estimated compute per success (2.54 TFLOPs) among 4 configurations meeting the floors (accuracy ≥ 90.0% (baseline A 120b-medium 28/30 minus 1 question), p95 latency ≤ 15 s); calibration accuracy 27/30"
+        },
+        {
+          "step": "solve",
+          "reason": "solved with 20b-low (20b, effort low, thinking in English): 187 in / 100 out tokens, 2.07 TFLOPs"
+        },
+        {
+          "step": "verify",
+          "reason": "passed: FINAL '9861' is valid for a math task (one number) and the ANSWER is in Arabic"
+        },
+        {
+          "step": "finish",
+          "reason": "accepted the answer from 20b-low after 0 escalation(s)"
+        }
+      ],
+      "attempts": [
+        {
+          "config": "20b-low",
+          "model": "openai/gpt-oss-20b",
+          "effort": "low",
+          "think_lang": "en",
+          "final": "9861",
+          "verified": true,
+          "verify_reason": "passed: FINAL '9861' is valid for a math task (one number) and the ANSWER is in Arabic",
+          "input_tokens": 187,
+          "output_tokens": 100,
+          "compute_flops": 2066400000000.0,
+          "cost_usd": 4.4025e-05,
+          "latency_s": 0.7868679579696618,
+          "cached": false
+        }
+      ],
+      "total_compute_flops": 2066400000000.0,
+      "total_cost_usd": 4.4025e-05,
+      "total_latency_s": 0.7868679579696618,
+      "gold": "7400",
+      "correct": false
+    },
+    {
+      "task_id": "gsm8k-ar-1242",
+      "task_type": "math",
+      "final": "20",
+      "answer_text": "عدد القبعات البيضاء هو عشرون",
+      "verified": true,
+      "escalations": 0,
+      "fallbacks": [],
+      "decisions": [
+        {
+          "step": "estimate",
+          "reason": "task type 'math' is given by the task; calibration profile has 8 configurations measured on up to 30 items"
+        },
+        {
+          "step": "choose",
+          "reason": "chose 20b-low: lowest estimated compute per success (2.54 TFLOPs) among 4 configurations meeting the floors (accuracy ≥ 90.0% (baseline A 120b-medium 28/30 minus 1 question), p95 latency ≤ 15 s); calibration accuracy 27/30"
+        },
+        {
+          "step": "solve",
+          "reason": "solved with 20b-low (20b, effort low, thinking in English): 207 in / 77 out tokens, 2.04 TFLOPs"
+        },
+        {
+          "step": "verify",
+          "reason": "passed: FINAL '20' is valid for a math task (one number) and the ANSWER is in Arabic"
+        },
+        {
+          "step": "finish",
+          "reason": "accepted the answer from 20b-low after 0 escalation(s)"
+        }
+      ],
+      "attempts": [
+        {
+          "config": "20b-low",
+          "model": "openai/gpt-oss-20b",
+          "effort": "low",
+          "think_lang": "en",
+          "final": "20",
+          "verified": true,
+          "verify_reason": "passed: FINAL '20' is valid for a math task (one number) and the ANSWER is in Arabic",
+          "input_tokens": 207,
+          "output_tokens": 77,
+          "compute_flops": 2044800000000.0,
+          "cost_usd": 3.8625e-05,
+          "latency_s": 0.5814464580034837,
+          "cached": false
+        }
+      ],
+      "total_compute_flops": 2044800000000.0,
+      "total_cost_usd": 3.8625e-05,
+      "total_latency_s": 0.5814464580034837,
+      "gold": "20",
+      "correct": true
+    },
+    {
+      "task_id": "gsm8k-ar-172",
+      "task_type": "math",
+      "final": "51",
+      "answer_text": "ما هو العمر الإجمالي للطيارات الأربعة؟",
+      "verified": true,
+      "escalations": 0,
+      "fallbacks": [],
+      "decisions": [
+        {
+          "step": "estimate",
+          "reason": "task type 'math' is given by the task; calibration profile has 8 configurations measured on up to 30 items"
+        },
+        {
+          "step": "choose",
+          "reason": "chose 20b-low: lowest estimated compute per success (2.54 TFLOPs) among 4 configurations meeting the floors (accuracy ≥ 90.0% (baseline A 120b-medium 28/30 minus 1 question), p95 latency ≤ 15 s); calibration accuracy 27/30"
+        },
+        {
+          "step": "solve",
+          "reason": "solved with 20b-low (20b, effort low, thinking in English): 218 in / 583 out tokens, 5.77 TFLOPs"
+        },
+        {
+          "step": "verify",
+          "reason": "passed: FINAL '51' is valid for a math task (one number) and the ANSWER is in Arabic"
+        },
+        {
+          "step": "finish",
+          "reason": "accepted the answer from 20b-low after 0 escalation(s)"
+        }
+      ],
+      "attempts": [
+        {
+          "config": "20b-low",
+          "model": "openai/gpt-oss-20b",
+          "effort": "low",
+          "think_lang": "en",
+          "final": "51",
+          "verified": true,
+          "verify_reason": "passed: FINAL '51' is valid for a math task (one number) and the ANSWER is in Arabic",
+          "input_tokens": 218,
+          "output_tokens": 583,
+          "compute_flops": 5767200000000.0,
+          "cost_usd": 0.00019125,
+          "latency_s": 1.0395321249961853,
+          "cached": false
+        }
+      ],
+      "total_compute_flops": 5767200000000.0,
+      "total_cost_usd": 0.00019125,
+      "total_latency_s": 1.0395321249961853,
+      "gold": "51",
+      "correct": true
+    },
+    {
+      "task_id": "gsm8k-ar-971",
+      "task_type": "math",
+      "final": "50",
+      "answer_text": "يحتاج روبرت إلى 50 لوحًا خشبيًا",
+      "verified": true,
+      "escalations": 0,
+      "fallbacks": [],
+      "decisions": [
+        {
+          "step": "estimate",
+          "reason": "task type 'math' is given by the task; calibration profile has 8 configurations measured on up to 30 items"
+        },
+        {
+          "step": "choose",
+          "reason": "chose 20b-low: lowest estimated compute per success (2.54 TFLOPs) among 4 configurations meeting the floors (accuracy ≥ 90.0% (baseline A 120b-medium 28/30 minus 1 question), p95 latency ≤ 15 s); calibration accuracy 27/30"
+        },
+        {
+          "step": "solve",
+          "reason": "solved with 20b-low (20b, effort low, thinking in English): 208 in / 62 out tokens, 1.94 TFLOPs"
+        },
+        {
+          "step": "verify",
+          "reason": "passed: FINAL '50' is valid for a math task (one number) and the ANSWER is in Arabic"
+        },
+        {
+          "step": "finish",
+          "reason": "accepted the answer from 20b-low after 0 escalation(s)"
+        }
+      ],
+      "attempts": [
+        {
+          "config": "20b-low",
+          "model": "openai/gpt-oss-20b",
+          "effort": "low",
+          "think_lang": "en",
+          "final": "50",
+          "verified": true,
+          "verify_reason": "passed: FINAL '50' is valid for a math task (one number) and the ANSWER is in Arabic",
+          "input_tokens": 208,
+          "output_tokens": 62,
+          "compute_flops": 1944000000000.0,
+          "cost_usd": 3.42e-05,
+          "latency_s": 0.4400444999919273,
+          "cached": false
+        }
+      ],
+      "total_compute_flops": 1944000000000.0,
+      "total_cost_usd": 3.42e-05,
+      "total_latency_s": 0.4400444999919273,
+      "gold": "100",
+      "correct": false
+    },
+    {
+      "task_id": "gsm8k-ar-707",
+      "task_type": "math",
+      "final": "8",
+      "answer_text": "تستخدم المدينة 8٪ من مياه النهر لأغراض غير صناعية.",
+      "verified": true,
+      "escalations": 1,
+      "fallbacks": [],
+      "decisions": [
+        {
+          "step": "estimate",
+          "reason": "task type 'math' is given by the task; calibration profile has 8 configurations measured on up to 30 items"
+        },
+        {
+          "step": "choose",
+          "reason": "chose 20b-low: lowest estimated compute per success (2.54 TFLOPs) among 4 configurations meeting the floors (accuracy ≥ 90.0% (baseline A 120b-medium 28/30 minus 1 question), p95 latency ≤ 15 s); calibration accuracy 27/30"
+        },
+        {
+          "step": "solve",
+          "reason": "solved with 20b-low (20b, effort low, thinking in English): 197 in / 91 out tokens, 2.07 TFLOPs"
+        },
+        {
+          "step": "verify",
+          "reason": "failed: the ANSWER line is missing or not in Arabic"
+        },
+        {
+          "step": "escalate",
+          "reason": "escalation 1/2: raise effort low → medium on 20b, because the ANSWER line is missing or not in Arabic"
+        },
+        {
+          "step": "solve",
+          "reason": "solved with 20b-medium (20b, effort medium, thinking in English): 197 in / 334 out tokens, 3.82 TFLOPs"
+        },
+        {
+          "step": "verify",
+          "reason": "passed: FINAL '8' is valid for a math task (one number) and the ANSWER is in Arabic"
+        },
+        {
+          "step": "finish",
+          "reason": "accepted the answer from 20b-medium after 1 escalation(s)"
+        }
+      ],
+      "attempts": [
+        {
+          "config": "20b-low",
+          "model": "openai/gpt-oss-20b",
+          "effort": "low",
+          "think_lang": "en",
+          "final": "8",
+          "verified": false,
+          "verify_reason": "failed: the ANSWER line is missing or not in Arabic",
+          "input_tokens": 197,
+          "output_tokens": 91,
+          "compute_flops": 2073600000000.0,
+          "cost_usd": 4.2075e-05,
+          "latency_s": 0.47131229197839275,
+          "cached": false
+        },
+        {
+          "config": "20b-medium",
+          "model": "openai/gpt-oss-20b",
+          "effort": "medium",
+          "think_lang": "en",
+          "final": "8",
+          "verified": true,
+          "verify_reason": "passed: FINAL '8' is valid for a math task (one number) and the ANSWER is in Arabic",
+          "input_tokens": 197,
+          "output_tokens": 334,
+          "compute_flops": 3823200000000.0,
+          "cost_usd": 0.00011497499999999999,
+          "latency_s": 0.8631935000303201,
+          "cached": false
+        }
+      ],
+      "total_compute_flops": 5896800000000.0,
+      "total_cost_usd": 0.00015705,
+      "total_latency_s": 1.3345057920087129,
+      "gold": "8",
+      "correct": true
+    }
+  ]
+}

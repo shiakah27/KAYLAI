@@ -34,6 +34,7 @@ def build_profile(rows: list[dict]) -> dict:
         lat = [r["latency_s"] for r in rs if r.get("latency_s") is not None]
         profile[task_type][name] = {
             "n": len(rs),
+            "correct": n_ok,
             "accuracy": n_ok / len(rs),
             "compute_per_success": metrics.per_success([r["compute_flops"] for r in rs], n_ok),
             "avg_latency_s": sum(lat) / len(lat) if lat else None,

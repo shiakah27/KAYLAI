@@ -5,8 +5,8 @@ import pytest
 
 from kayl import metrics
 from kayl.agent import infer_type, next_config, run_agent
-from kayl.client import CallResult
-from kayl.config import load_config, model_info
+from kayl.client import CallResult, DailyLimitError
+from kayl.config import accuracy_floor, load_config, max_output_tokens, model_info
 from kayl.grading import validate
 from kayl.profile import build_profile, p95
 
@@ -17,7 +17,7 @@ KNOW = {"id": "k1", "type": "knowledge", "question": "ما عاصمة السعو
 
 
 def stats(acc, tflops, p95_s=3.0, n=30):
-    return {"n": n, "accuracy": acc, "compute_per_success": tflops * 1e12,
+    return {"n": n, "correct": round(acc * n), "accuracy": acc, "compute_per_success": tflops * 1e12,
             "avg_latency_s": p95_s / 2, "p95_latency_s": p95_s}
 
 
@@ -107,7 +107,7 @@ def test_no_profile_uses_fallback():
     fake = FakeModel()
     out = run_agent(MATH, CFG, {}, fake)
     assert fake.calls[0] == (CFG["fallback_model"], "medium", "en")
-    assert "no calibration data" in out["decisions"][1]["reason"]
+    assert "no usable calibration data" in out["decisions"][1]["reason"]
 
 
 # ---------- verify + escalate ----------
@@ -163,7 +163,7 @@ def test_largest_model_highest_effort_cannot_escalate():
     (lambda m, e, l: CallResult(task_id="t", task_type="math", model=m, effort=e, think_lang=l,
                                 final=None, finish_reason="length"), "cut off"),
     (lambda m, e, l: CallResult(task_id="t", task_type="math", model=m, effort=e, think_lang=l,
-                                error="RateLimitError: limit"), "did not succeed"),
+                                error="APIConnectionError: connection reset"), "did not succeed"),
 ])
 def test_verify_failure_reasons(bad, expected):
     out = run_agent(MATH, CFG, PROFILE, FakeModel({("openai/gpt-oss-20b", "low"): bad}))
@@ -222,7 +222,73 @@ def test_build_profile_and_p95():
 
 
 def test_config_with_too_few_items_is_ignored():
-    profile = {"math": {"20b-medium-ar": stats(1.0, 0.5, n=2), "20b-low": stats(0.90, 2.0)}}
+    profile = {"math": {"120b-high": stats(1.0, 0.5, n=2), "20b-low": stats(0.90, 2.0)}}
     out = run_agent(MATH, CFG, profile, FakeModel())
     assert out["attempts"][0]["config"] == "20b-low"
     assert "measured on only 2 items" in out["decisions"][1]["reason"]
+
+
+# ---------- floors from baseline A ----------
+
+def test_floor_is_baseline_a_minus_one_question():
+    profile = {"math": {"120b-medium": stats(28 / 30, 5.0)}}
+    floor, why = accuracy_floor(CFG, profile, "math")
+    assert floor == pytest.approx(27 / 30) and "28/30 minus 1 question" in why
+
+
+def test_config_one_question_below_baseline_counts():
+    # baseline 28/30 -> floor 27/30: 20b-low (27/30) يحقق الحد، allam (26/30) لا
+    profile = {"math": {"120b-medium": stats(28 / 30, 5.0), "20b-low": stats(27 / 30, 2.0),
+                        "allam": stats(26 / 30, 1.0)}}
+    out = run_agent(MATH, CFG, profile, FakeModel())
+    assert out["attempts"][0]["config"] == "20b-low"
+
+
+def test_fixed_floor_when_no_baseline():
+    floor, why = accuracy_floor(CFG, {"math": {}}, "math")
+    assert floor == CFG["floors"]["accuracy"] and "fixed" in why
+
+
+def test_high_effort_cap_only_for_120b():
+    assert max_output_tokens(CFG, "openai/gpt-oss-120b", "high") == 8192
+    assert max_output_tokens(CFG, "openai/gpt-oss-120b", "medium") == 2048
+    assert max_output_tokens(CFG, "openai/gpt-oss-20b", "high") == 2048
+
+
+# ---------- fallback on rate / daily limits ----------
+
+def daily_limited(model, effort, lang):
+    raise DailyLimitError("tokens per day (TPD): Limit 200000")
+
+
+def rate_limited(model, effort, lang):
+    return CallResult(task_id="t", task_type="math", model=model, effort=effort, think_lang=lang,
+                      error="RateLimitError: limit")
+
+
+@pytest.mark.parametrize("limited, words", [(daily_limited, "daily token limit"),
+                                            (rate_limited, "rate limit even after retries")])
+def test_fallback_to_next_best_config_on_other_model(limited, words):
+    fake = FakeModel({("openai/gpt-oss-20b", "low"): limited})
+    out = run_agent(MATH, CFG, PROFILE, fake)
+    # 20b غير متاح -> أفضل إعداد على نموذج آخر يحقق الحد: 120b-low
+    assert fake.calls == [("openai/gpt-oss-20b", "low", "en"), ("openai/gpt-oss-120b", "low", "en")]
+    assert out["verified"] and out["escalations"] == 0  # الانتقال ليس تصعيدًا
+    fb = out["fallbacks"][0]
+    assert fb["from"] == "20b-low" and fb["to"] == "120b-low" and words in fb["reason"]
+    assert steps(out) == ["estimate", "choose", "fallback", "solve", "verify", "finish"]
+
+
+def test_escalation_skips_unavailable_model():
+    # 20b وصل حده، ثم 120b-low فشل في التحقق -> رفع التفكير على 120b (وليس العودة لـ 20b)
+    fake = FakeModel({("openai/gpt-oss-20b", "low"): daily_limited, ("openai/gpt-oss-120b", "low"): no_final})
+    out = run_agent(MATH, CFG, PROFILE, fake)
+    assert fake.calls[-1] == ("openai/gpt-oss-120b", "medium", "en")
+    assert all(m != "openai/gpt-oss-20b" for m, _, _ in fake.calls[1:])
+
+
+def test_all_models_limited():
+    every = {(m, e): daily_limited for m in CFG["models"] for e in (None, "low", "medium", "high")}
+    out = run_agent(MATH, CFG, PROFILE, FakeModel(every))
+    assert not out["verified"]
+    assert any("no other model is available" in d["reason"] for d in out["decisions"])
