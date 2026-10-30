@@ -1,0 +1,5 @@
+litellm>=1.50        # all model calls go through LiteLLM
+datasets>=2.19       # used by prepare_data.py to download Arabic-GSM8K
+pyyaml>=6.0          # read config.yaml
+python-dotenv>=1.0   # load GROQ_API_KEY from .env
+pytest>=8.0          # tests

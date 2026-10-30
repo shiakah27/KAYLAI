@@ -1,0 +1,54 @@
+# Rashid (رشيد) — single source of truth for models, prices, and floors.
+# Code reads everything from here; nothing is hard-coded.
+
+provider: groq
+
+# Prices are USD per 1M tokens, from Groq's published list.
+# VERIFY at https://groq.com/pricing before reporting final results — prices change.
+prices_checked_on: "2026-10-30"
+
+models:
+  llama-3.1-8b-instant:
+    litellm_id: groq/llama-3.1-8b-instant
+    size: small
+    input_price: 0.05
+    output_price: 0.08
+    supports_reasoning_effort: false   # no thinking control on this model
+  openai/gpt-oss-20b:
+    litellm_id: groq/openai/gpt-oss-20b
+    size: medium
+    input_price: 0.075
+    output_price: 0.30
+    supports_reasoning_effort: true    # low / medium / high
+  openai/gpt-oss-120b:
+    litellm_id: groq/openai/gpt-oss-120b
+    size: large
+    input_price: 0.15
+    output_price: 0.60
+    supports_reasoning_effort: true
+
+reasoning_efforts: [low, medium, high]
+
+# Language the model reasons in. The final answer is always in Arabic.
+think_languages: [ar, en]
+
+# A configuration only "counts" if it meets both floors.
+# These are STARTING VALUES, not measured. Plan: after baseline A (largest model)
+# runs on calibration, set the accuracy floor relative to it and document why.
+floors:
+  accuracy: 0.80        # min fraction of correct answers
+  latency_p95_s: 15     # 95th-percentile seconds per task
+
+generation:
+  temperature: 0
+  max_output_tokens: 2048   # cap to stay free-tier friendly
+
+runs_per_experiment: 2
+
+# Used if a call errors after retries.
+fallback_model: openai/gpt-oss-20b
+
+paths:
+  data: data
+  cache: cache
+  db: runs/rashid.sqlite
