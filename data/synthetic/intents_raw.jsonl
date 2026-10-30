@@ -1,0 +1,100 @@
+{"intent": "renew_national_id", "dialect": "msa", "text": "أحتاج إلى تجديد بطاقة هويتي الوطنية قبل انتهاء صلاحيتها، أرجو إرشادي إلى الخطوات المطلوبة عبر المنصة الإلكترونية."}
+{"intent": "renew_national_id", "dialect": "msa", "text": "أواجه صعوبة في تحديث بيانات هويتي، هل يمكنكم مساعدتي في إكمال عملية التجديد عبر الإنترنت؟"}
+{"intent": "renew_national_id", "dialect": "msa", "text": "أرغب في تجديد بطاقة الهوية الوطنية إلكترونياً لتفادي الانتظار في المكاتب، أحتاج إلى رابط الخدمة."}
+{"intent": "renew_national_id", "dialect": "msa", "text": "أحتاج إلى تجديد هويتي الوطنية عبر الموقع الرسمي، أرجو توجيهي إلى النموذج المناسب."}
+{"intent": "renew_national_id", "dialect": "msa", "text": "أطلب تجديد بطاقة الهوية الوطنية إلكترونياً بسبب قرب انتهاء صلاحيتها، أحتاج إلى إرشادات سريعة."}
+{"intent": "renew_national_id", "dialect": "saudi", "text": "يا جماعة أبغى أجدد هويتي الوطنية، ما لقيت موعد قريب، ممكن تساعدوني؟"}
+{"intent": "renew_national_id", "dialect": "saudi", "text": "محتاج أستخرج بطاقة هوية جديدة، كل ما أدخل الموقع يطلعلي خطأ، وش السالفة؟"}
+{"intent": "renew_national_id", "dialect": "saudi", "text": "أبغى أعمل تجديد للهوية، بس ما عندي وقت أروح للموارد، فيه طريقة إلكترونية سريعة؟"}
+{"intent": "renew_national_id", "dialect": "saudi", "text": "يا ربع، بطاقتي قربت تنتهي ومحتاج أجدده، ما أدري وش الخطوات بالضبط"}
+{"intent": "renew_national_id", "dialect": "saudi", "text": "هل فيه أحد جرب تجديد الهوية عبر التطبيق؟ ياليت تفيدوني إذا فيه مشاكل أو متطلبات"}
+{"intent": "renew_passport", "dialect": "msa", "text": "أحتاج إلى تجديد جواز سفري الذي سينتهي قريبًا، أرجو إرشادي إلى الخطوات اللازمة عبر المنصة الإلكترونية."}
+{"intent": "renew_passport", "dialect": "msa", "text": "أواجه صعوبة في الحصول على جواز سفر جديد بعد انتقالي إلى السعودية، هل يمكنكم مساعدتي في إتمام الطلب إلكترونيًا؟"}
+{"intent": "renew_passport", "dialect": "msa", "text": "أرغب في تجديد وثيقة السفر الخاصة بي عبر الموقع الرسمي لتجنب الانتظار في المكاتب."}
+{"intent": "renew_passport", "dialect": "msa", "text": "أحتاج إلى إصدار جواز سفر جديد بسبب فقدانه، وأرغب في معرفة كيفية تقديم الطلب عبر الإنترنت."}
+{"intent": "renew_passport", "dialect": "msa", "text": "أطلب تجديد جواز سفري الحالي الذي انتهت صلاحيته، وأحتاج إلى توجيهات حول إكمال العملية إلكترونيًا."}
+{"intent": "renew_passport", "dialect": "saudi", "text": "يا جماعة أبغى أجدد جواز سفري، ما لقيت موعد ولا أقدر أروح المركز"}
+{"intent": "renew_passport", "dialect": "saudi", "text": "محتاج أطلع جواز جديد لأن الجواز القديم انتهى صلاحيته، وش السالفة؟"}
+{"intent": "renew_passport", "dialect": "saudi", "text": "ودي أستفسر عن طريقة تجديد الجواز إلكترونياً، ما عندي وقت أروح"}
+{"intent": "renew_passport", "dialect": "saudi", "text": "أبغى أطلب جواز جديد لأن الفيزا تحتاج جواز ساري، كيف أعملها؟"}
+{"intent": "renew_passport", "dialect": "saudi", "text": "متى أقدر أجدّد جواز سفري من البيت؟ ما فيه خطوات واضحة"}
+{"intent": "renew_driving_license", "dialect": "msa", "text": "أحتاج إلى تجديد رخصة قيادتي قبل انتهاء صلاحيتها بأسرع وقت ممكن."}
+{"intent": "renew_driving_license", "dialect": "msa", "text": "أواجه صعوبة في إكمال إجراءات تجديد رخصة القيادة عبر الموقع الإلكتروني وأرغب بالمساعدة."}
+{"intent": "renew_driving_license", "dialect": "msa", "text": "أرغب في تحديث رخصة سيارتي لتكون سارية للعام القادم، أرجو إرشادي للخطوات اللازمة."}
+{"intent": "renew_driving_license", "dialect": "msa", "text": "هل يمكنني تجديد رخصة القيادة إلكترونياً دون الحاجة للذهاب إلى المركز؟"}
+{"intent": "renew_driving_license", "dialect": "msa", "text": "أحتاج إلى تجديد رخصة القيادة بسبب قرب انتهاء المدة وأريد معرفة المستندات المطلوبة."}
+{"intent": "renew_driving_license", "dialect": "saudi", "text": "يا جماعة أبغى أجدد رخصتي للقيادة، وش الإجراءات؟"}
+{"intent": "renew_driving_license", "dialect": "saudi", "text": "محتاج أستفسر عن طريقة تجديد رخصة السيارة، ما لقيتها في الموقع"}
+{"intent": "renew_driving_license", "dialect": "saudi", "text": "ودي أعمل تجديد للقيادة، بس ما أدري وش المستندات المطلوبة"}
+{"intent": "renew_driving_license", "dialect": "saudi", "text": "هل فيه طريقة سريعة لتجديد رخصة القيادة من غير ما أروح للدوائر؟"}
+{"intent": "renew_driving_license", "dialect": "saudi", "text": "أواجه صعوبة في تجديد رخصتي، كل ما أحاول يطلع لي خطأ"}
+{"intent": "traffic_violation_inquiry", "dialect": "msa", "text": "أود معرفة عدد المخالفات المرورية المسجلة باسمي وكيفية سدادها عبر المنصة الإلكترونية."}
+{"intent": "traffic_violation_inquiry", "dialect": "msa", "text": "هل يمكنكم إبلاغي بالمخالفات الأخيرة التي ارتكبتها وتوجيه خطوات الدفع الإلكتروني؟"}
+{"intent": "traffic_violation_inquiry", "dialect": "msa", "text": "أحتاج استفسار حول غرامة مرورية تم خصمها من حسابي وأرغب في الاعتراض عليها."}
+{"intent": "traffic_violation_inquiry", "dialect": "msa", "text": "أرجو توضيح طريقة سداد المخالفات المرورية المستحقة عبر الموقع الرسمي دون الحاجة لزيارة المركز."}
+{"intent": "traffic_violation_inquiry", "dialect": "msa", "text": "أطلب مراجعة المخالفة المرورية رقم 123456789 وتقديم طلب الاعتراض عبر القنوات الرقمية."}
+{"intent": "traffic_violation_inquiry", "dialect": "saudi", "text": "يا جماعة، أبغى أعرف إذا فيه مخالفات على سيارتي هالأيام ولا لا؟"}
+{"intent": "traffic_violation_inquiry", "dialect": "saudi", "text": "ممكن أحد يوضح لي طريقة سداد المخالفات اللي عندي بدون ما أدخل الموقع؟"}
+{"intent": "traffic_violation_inquiry", "dialect": "saudi", "text": "أنا استلمت مخالفة وما فهمت السبب، أبغى أستفسر وأشوف إذا أقدر أرفع اعتراض"}
+{"intent": "traffic_violation_inquiry", "dialect": "saudi", "text": "هل فيه طريقة أسهل أتابع فيها المخالفات وأدفعها من جوالي؟"}
+{"intent": "traffic_violation_inquiry", "dialect": "saudi", "text": "يا ربع، عندي مخالفة وأبي أقدم طلب اعتراض، وش الخطوات؟"}
+{"intent": "exit_reentry_visa", "dialect": "msa", "text": "أحتاج إلى استخراج تأشيرة خروج وعودة لزوجتي التي ستسافر إلى بلدها غداً، أرجو تسريع العملية."}
+{"intent": "exit_reentry_visa", "dialect": "msa", "text": "أواجه صعوبة في إكمال طلب خروج العامل من خلال المنصة الإلكترونية، هل يمكنكم مساعدتي؟"}
+{"intent": "exit_reentry_visa", "dialect": "msa", "text": "أرغب في الحصول على تأشيرة خروج وعودة لابني المتواجد في السعودية لتتمكن عائلته من زيارته."}
+{"intent": "exit_reentry_visa", "dialect": "msa", "text": "أحتاج إلى تجديد تأشيرة خروج وعودة للموظف الذي سيغادر للقيام بأعمال خارجية، الرجاء إرشادي للخطوات اللازمة."}
+{"intent": "exit_reentry_visa", "dialect": "msa", "text": "أطلب إصدارة تأشيرة خروج وعودة للعاملة المنزلية لتتمكن من زيارة عائلتها في الخارج، وأحتاج إلى معرفة المستندات المطلوبة."}
+{"intent": "exit_reentry_visa", "dialect": "saudi", "text": "يا جماعة، أبغى أطلع على إجازة خروج للعمال، ياليت تساعدوني بأسرع وقت"}
+{"intent": "exit_reentry_visa", "dialect": "saudi", "text": "محتاج أرجع للبلد وأحتاج تأشيرة عودة، ما لقيت طريقة في الموقع"}
+{"intent": "exit_reentry_visa", "dialect": "saudi", "text": "هل فيه طريقة سريعة للحصول على تأشيرة خروج للموظف؟"}
+{"intent": "exit_reentry_visa", "dialect": "saudi", "text": "أواجه صعوبة في استخراج تصريح خروج للموظف، ممكن توجيه؟"}
+{"intent": "exit_reentry_visa", "dialect": "saudi", "text": "ودي أطلب تأشيرة عودة للزوجة، ما لقيت الرابط المناسب"}
+{"intent": "vehicle_ownership_transfer", "dialect": "msa", "text": "أرغب في تحويل ملكية سيارتي إلى اسمه بعد إتمام عملية البيع، أحتاج إرشادات للمتابعة عبر المنصة الإلكترونية."}
+{"intent": "vehicle_ownership_transfer", "dialect": "msa", "text": "أحتاج إلى مساعدة لنقل سند ملكية مركبتي إلى المشتري الجديد، حيث واجهت صعوبة في إكمال النموذج الرقمي."}
+{"intent": "vehicle_ownership_transfer", "dialect": "msa", "text": "أطلب إتمام عملية تحويل ملكية السيارة إلى الطرف الآخر، وأرغب في معرفة المستندات المطلوبة للرفع الإلكتروني."}
+{"intent": "vehicle_ownership_transfer", "dialect": "msa", "text": "أحتاج إلى توجيه حول كيفية إتمام نقل ملكية سيارتي عبر الخدمة الإلكترونية، حيث أنني غير متأكد من الخطوات اللازمة."}
+{"intent": "vehicle_ownership_transfer", "dialect": "msa", "text": "أطلب إتمام تحويل ملكية مركبتي إلى المشتري عبر الإنترنت، وأحتاج إلى توضيح الإجراءات المطلوبة للمتابعة."}
+{"intent": "vehicle_ownership_transfer", "dialect": "saudi", "text": "يا جماعة، أبغى أنقل ملكية سيارتي للزوج بعد ما تزوجنا، وش الإجراءات؟"}
+{"intent": "vehicle_ownership_transfer", "dialect": "saudi", "text": "محتاج أغير اسم المالك للسيارة اللي شريت منها قبل شهر، كيف أقدم الطلب؟"}
+{"intent": "vehicle_ownership_transfer", "dialect": "saudi", "text": "ودي أضيف اسمي على رخصة السيارة لأن صديقي ما يبي يظل المالك، هل فيه طريقة سريعة؟"}
+{"intent": "vehicle_ownership_transfer", "dialect": "saudi", "text": "أبغى أستبدل اسم المالك بالاسم الجديد للسيارة، ما لقيت خيار واضح في الموقع"}
+{"intent": "vehicle_ownership_transfer", "dialect": "saudi", "text": "عندي مشكلة نقل ملكية سيارتي للابن، ما أعرف من وين أبدأ"}
+{"intent": "book_medical_appointment", "dialect": "msa", "text": "أحتاج إلى تحديد موعد فحص طبي في أقرب مركز صحي حكومي بأسرع وقت ممكن"}
+{"intent": "book_medical_appointment", "dialect": "msa", "text": "أواجه صعوبة في الحصول على موعد للمتابعة الطبية في المستشفى العام، هل يمكنكم مساعدتي؟"}
+{"intent": "book_medical_appointment", "dialect": "msa", "text": "أرغب بحجز جلسة استشارية مع طبيب مختص في مركز الرعاية الصحية الحكومي"}
+{"intent": "book_medical_appointment", "dialect": "msa", "text": "أحتاج إلى موعد لإجراء فحص دوري في المستشفى الحكومي القريب من منطقتي"}
+{"intent": "book_medical_appointment", "dialect": "msa", "text": "هل يمكن ترتيب موعد فحص دم في أحد المراكز الصحية الحكومية؟"}
+{"intent": "book_medical_appointment", "dialect": "saudi", "text": "يا جماعة أبغى أحجز موعد فحص عام بالمستشفى الحكومي، متى أقدر أختار؟"}
+{"intent": "book_medical_appointment", "dialect": "saudi", "text": "محتاج أضبط موعد للعيادة العامة، ما لقيت طريقة الحجز في التطبيق"}
+{"intent": "book_medical_appointment", "dialect": "saudi", "text": "أبي موعد طبي قريب، عندكم طريقة سريعة للحجز ولا أستنى؟"}
+{"intent": "book_medical_appointment", "dialect": "saudi", "text": "حجز موعد فحص دم للمتابعة، ما لقيت الرابط ولا أقدر أكمّل"}
+{"intent": "book_medical_appointment", "dialect": "saudi", "text": "متى أقدر أحدد موعد للعيادة النسائية؟ ما لقيت خيار الحجز في الموقع"}
+{"intent": "report_utility_outage", "dialect": "msa", "text": "أواجه انقطاعًا مفاجئًا في التيار الكهربائي منذ الصباح، أرجو التدخل السريع لإعادة التيار إلى منزلي."}
+{"intent": "report_utility_outage", "dialect": "msa", "text": "المياه توقفت عن التدفق في شقتي منذ ليلة البارحة، أحتاج إلى صيانة عاجلة لتصحيح العطل."}
+{"intent": "report_utility_outage", "dialect": "msa", "text": "أريد الإبلاغ عن انقطاع التيار الكهربائي في الحي، يرجى إرسال فريق فني لتحديد السبب وإصلاحه."}
+{"intent": "report_utility_outage", "dialect": "msa", "text": "انقطاع المياه أثر على جميع المرافق في المنزل، أطلب فحصًا فوريًا وإصلاحًا للخطأ."}
+{"intent": "report_utility_outage", "dialect": "msa", "text": "التيار الكهربائي انقطع عن شقتي دون سابق إنذار، أحتاج إلى استعادة الخدمة في أقرب وقت ممكن."}
+{"intent": "report_utility_outage", "dialect": "saudi", "text": "يا جماعة، ما في كهربا عندنا من الصبح، يرجى التفعيل بأسرع وقت"}
+{"intent": "report_utility_outage", "dialect": "saudi", "text": "مياه الشقة مقطوعة من يومين، حنا محتاجين حل فوري"}
+{"intent": "report_utility_outage", "dialect": "saudi", "text": "التيار الكهربائي انقطع فجأة، ما أدري السبب، ياليت تتصرفون"}
+{"intent": "report_utility_outage", "dialect": "saudi", "text": "ما وصلنا ماء الصبح، الوضع صعب، نحتاج صيانة عاجلة"}
+{"intent": "report_utility_outage", "dialect": "saudi", "text": "الكهربا عندنا طافية من الليل، نطلب تدخل سريع"}
+{"intent": "social_support_inquiry", "dialect": "msa", "text": "أرغب في معرفة الشروط المطلوبة للحصول على الدعم المالي من الجهات المختصة في المملكة؟"}
+{"intent": "social_support_inquiry", "dialect": "msa", "text": "هل يمكنكم توضيح طريقة الاستفادة من برنامج الضمان الاجتماعي للمواطنين المقيمين؟"}
+{"intent": "social_support_inquiry", "dialect": "msa", "text": "أحتاج إلى معلومات حول المستندات اللازمة لتقديم طلب مساعدة حكومية عاجلة."}
+{"intent": "social_support_inquiry", "dialect": "msa", "text": "كيف يمكنني متابعة حالة طلبي للحصول على الدعم الاقتصادي دون الدخول إلى الموقع الرسمي؟"}
+{"intent": "social_support_inquiry", "dialect": "msa", "text": "أواجه صعوبة في فهم آلية توزيع المساعدات، هل هناك دليل إرشادي يمكنكم إرساله؟"}
+{"intent": "social_support_inquiry", "dialect": "saudi", "text": "يا جماعة، متى بيصير فيه تحديث للضمان الاجتماعي؟"}
+{"intent": "social_support_inquiry", "dialect": "saudi", "text": "متى أقدر أستفسر عن الدعم اللي يخص العوائل؟"}
+{"intent": "social_support_inquiry", "dialect": "saudi", "text": "أحتاج أعرف إذا استحقايه أي مساعدات حكومية هالسنة"}
+{"intent": "social_support_inquiry", "dialect": "saudi", "text": "فيه طريقة أسهل للتأكد من حالة طلب الضمان؟"}
+{"intent": "social_support_inquiry", "dialect": "saudi", "text": "لو سمحتوا، كيف أتابع طلب الدعم بدون ما أدخل الموقع كل مرة"}
+{"intent": "file_complaint", "dialect": "msa", "text": "أطالب بإجراء تحقيق فوري في سلوك الموظف المسؤول عن معالجة طلباتي، حيث تأخر الرد بشكل غير مبرر وتسبب ذلك في إزعاج كبير."}
+{"intent": "file_complaint", "dialect": "msa", "text": "أرجو من الجهة المختصة اتخاذ إجراءات حازمة ضد الموظف الذي يتعامل بوقاحة مع المواطنين ويتجاهل استفساراتهم بصورة مستمرة."}
+{"intent": "file_complaint", "dialect": "msa", "text": "أطلب من الإدارة العليا التدخل لإنهاء الإهمال المتكرر في تقديم الخدمات الإلكترونية الذي يعرقل إنجاز معاملاتي اليومية."}
+{"intent": "file_complaint", "dialect": "msa", "text": "أطالب بإنهاء السلوك غير المهني للموظف الذي يرفض تقديم المساعدة ويعطي معلومات متناقضة للمستفيدين."}
+{"intent": "file_complaint", "dialect": "msa", "text": "أطلب من المسؤولين اتخاذ خطوات فورية لتصحيح الأخطاء المتكررة في النظام التي تؤدي إلى تأخير الخدمات وتفاقم معاناة المتعاملين."}
+{"intent": "file_complaint", "dialect": "saudi", "text": "يا جماعة، ما أقبل إنجاز معاملتي عند مكتب الأحوال المدنية، الموظف كان متغاظ وما رد عليّ، أطالب بتصحيح الوضع"}
+{"intent": "file_complaint", "dialect": "saudi", "text": "أبغى أشتكي من خدمة الدعم الفني في وزارة العمل، كل ما أتواصل معهم يعلقون على المكالمات وما يحلون مشكلتي"}
+{"intent": "file_complaint", "dialect": "saudi", "text": "الموظف في مكتب المرور كان غير مهني، تأخرني ساعتين بدون سبب، أطلب اتخاذ إجراء ضد هذا السلوك"}
+{"intent": "file_complaint", "dialect": "saudi", "text": "تعبت من تأخير إصدار رخصة البناء عند البلدية، ما فيه أي تحديثات والناس تنتظر، لازم يتصرفون بسرعة"}
+{"intent": "file_complaint", "dialect": "saudi", "text": "أحس إن خدمة الاستعلام عن المخالفات في تطبيق المرور غير دقيقة، النتائج مختلفة كل مرة، أطالب بتحسين النظام"}

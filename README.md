@@ -31,9 +31,17 @@ KAYL does not train any model. It only uses controls that already exist.
 - Selection rule: among configurations predicted to meet both floors, pick the cheapest, and break ties by latency.
 
 ## Data
-- Source: [Arabic-GSM8K](https://huggingface.co/datasets/Omartificial-Intelligence-Space/Arabic-gsm8k) (MIT), with a fixed seed of 42.
-- `data/calibration.jsonl` (30 questions): the only data KAYL learns from.
-- `data/test.jsonl` (30 questions): held out and used only for the final evaluation.
+There are three Arabic task types. Each has 30 calibration and 30 held-out test questions, split with seed 42.
+
+| Type | Source | Graded by |
+|---|---|---|
+| `math` | [Arabic-GSM8K](https://huggingface.co/datasets/Omartificial-Intelligence-Space/Arabic-gsm8k) (MIT) | The final number |
+| `knowledge` | [ArabicMMLU](https://huggingface.co/datasets/MBZUAI/ArabicMMLU) (CC-BY-NC-4.0), all 21 subjects | The option letter |
+| `intent` | **Synthetic** citizen service requests in MSA and Saudi dialect, 10 intents | The intent label |
+
+- `data/calibration.jsonl` (90 questions): the only data KAYL learns from.
+- `data/test.jsonl` (90 questions): held out and used only for the final evaluation.
+- `data/robustness_en.jsonl` (20 questions): English GSM8K, used for testing only.
 - Full details, including license, how the files are built and limitations, are in [DATA.md](DATA.md).
 
 ## Setup
@@ -42,7 +50,9 @@ python3 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
 cp .env.example .env        # then put your GROQ_API_KEY in .env
-python prepare_data.py      # creates data/calibration.jsonl and data/test.jsonl
+python prepare_data.py      # rebuilds the data/ splits (no model calls)
+# Optional: python generate_intents.py regenerates the synthetic intent data (calls Groq).
+# Its output is already committed, so you do not need to run it.
 ```
 
 ## Planned experiments
