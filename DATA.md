@@ -35,6 +35,14 @@ Below are the estimated sizes of each item (question text plus choices, not coun
 **With the current data, every item fits in ALLaM's context**, even after adding the instructions and the 1,024-token output cap.
 The context check still matters for robustness: longer inputs such as long contexts or multi-turn chats would be routed away from ALLaM.
 
+### How the models were called
+- **Calibration sweep** (`results/calibration_sweep.*`): every call went directly to Groq.
+- **Final held-out test** (`results/final_test.*`): the gpt-oss calls went through **OpenRouter, pinned to the Groq provider**. The routing setting is `provider: {only: [groq], allow_fallbacks: false}`.
+  - Why: Groq's daily token limit (200K tokens per day per model) applies to the whole organization, and the calibration sweep had used it up.
+  - Checks: before the run, one test call per model returned `provider: Groq`. Every call logs the provider that actually answered, and a call from any other provider is rejected as an error.
+  - ALLaM stayed on Groq directly.
+- **Costs** are always computed with the Groq prices in `config.yaml`, not with OpenRouter's bill.
+
 All three task types use seed 42 (`random.Random(42)`). The split code `assert`s that no id appears in both calibration and test, and we also checked that no question text appears in both.
 
 ---

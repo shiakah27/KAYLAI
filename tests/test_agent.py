@@ -292,3 +292,14 @@ def test_all_models_limited():
     out = run_agent(MATH, CFG, PROFILE, FakeModel(every))
     assert not out["verified"]
     assert any("no other model is available" in d["reason"] for d in out["decisions"])
+
+
+def test_escalation_switches_for_ablations():
+    import copy
+    cur = {"model": "openai/gpt-oss-20b", "effort": "low", "think_lang": "en"}
+    no_effort = copy.deepcopy(CFG); no_effort["agent"]["escalate_effort"] = False
+    conf, _ = next_config(no_effort, cur)
+    assert conf["model"] == "openai/gpt-oss-120b" and conf["effort"] == "low"
+    no_model = copy.deepcopy(CFG); no_model["agent"]["escalate_model"] = False
+    conf, _ = next_config(no_model, {**cur, "effort": "high"})
+    assert conf is None

@@ -51,6 +51,8 @@ class CallResult:
     think_lang_followed: bool = False
     answer_in_arabic: bool = False
     finish_reason: str | None = None
+    provider: str | None = None         # من أجاب فعلًا: groq (مباشر) أو ما يذكره OpenRouter
+    route: str | None = None            # groq أو openrouter
     cached: bool = False
     skipped: bool = False               # لم نستدعِ النموذج (المهمة لا تتسع لسياقه)
     error: str | None = None
@@ -102,6 +104,16 @@ def _request(model_id: str, params: dict, messages: list[dict], retry_cfg: dict)
     raise RuntimeError("unreachable")
 
 
+def resolve_route(cfg: dict, model: str) -> tuple[str, str, dict]:
+    """أي معرّف نرسل إليه، وعبر أي طريق: (route، model_id، معاملات إضافية).
+    gpt-oss عبر OpenRouter مثبّتًا على Groq إذا طلب config ذلك، وكل شيء آخر إلى Groq مباشرة."""
+    routing = cfg.get("routing") or {}
+    or_id = (routing.get("openrouter_ids") or {}).get(model)
+    if routing.get("gpt_oss") == "openrouter" and or_id:
+        return "openrouter", or_id, {"extra_body": {"provider": routing["openrouter_provider"]}}
+    return "groq", model_info(cfg, model)["litellm_id"], {}
+
+
 def call_model(cfg: dict, task: dict, model: str, effort: str | None, think_lang: str,
                cache: DiskCache | None = None, format_example: bool | None = None) -> CallResult:
     """استدعاء واحد لمهمة واحدة. لا يرمي استثناء: الأخطاء تُسجل في result.error.
@@ -126,15 +138,18 @@ def call_model(cfg: dict, task: dict, model: str, effort: str | None, think_lang
               "max_tokens": max_output_tokens(cfg, model, effort)}
     if effort is not None:
         params["reasoning_effort"] = effort
+    route, model_id, extra = resolve_route(cfg, model)
+    params.update(extra)
+    result.route = route
 
     cache = cache or DiskCache(Path(cfg["paths"]["cache"]) / "llm")
-    key = cache_key(info["litellm_id"], params, messages)
+    key = cache_key(model_id, params, messages)
     record = cache.get(key)
     if record is not None:
         result.cached = True
     else:
         try:
-            raw, latency = _request(info["litellm_id"], params, messages, cfg["retries"])
+            raw, latency = _request(model_id, params, messages, cfg["retries"])
         except DailyLimitError:
             raise  # يوقف التجربة لهذا النموذج؛ ما تم محفوظ في الكاش
         except Exception as e:  # بعد كل المحاولات: نسجل الخطأ ولا نوقف التجربة
@@ -145,6 +160,10 @@ def call_model(cfg: dict, task: dict, model: str, effort: str | None, think_lang
         cache.put(key, record)
 
     _fill_from_response(result, record, info, messages[-1]["content"])
+    result.provider = record["response"].get("provider") or "groq"
+    if route == "openrouter" and result.provider.lower() != "groq":
+        # لا نقبل أي مزود آخر: الأرقام يجب أن تكون من نفس عتاد Groq
+        result.error = f"wrong_provider: {result.provider}"
     return result
 
 

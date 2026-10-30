@@ -45,6 +45,20 @@ models:
     max_output_tokens_by_effort: {high: 8192}
     supports_reasoning_effort: true
 
+# How gpt-oss calls are sent. Groq's daily token limit (200K/day) is per organization and was
+# used up by calibration, so final-test calls go through OpenRouter, PINNED to the Groq provider
+# (same models on the same hardware; no silent provider switch). ALLaM stays on Groq directly.
+#   groq       -> litellm_id (e.g. groq/openai/gpt-oss-20b)   — used for the calibration sweep
+#   openrouter -> openrouter_id with provider {only: [groq], allow_fallbacks: false}
+# Costs are always computed with the Groq prices above, not OpenRouter's bill.
+# The cache key includes the model id actually used, so the two routes never mix.
+routing:
+  gpt_oss: openrouter
+  openrouter_ids:
+    openai/gpt-oss-20b: openrouter/openai/gpt-oss-20b
+    openai/gpt-oss-120b: openrouter/openai/gpt-oss-120b
+  openrouter_provider: {only: [groq], allow_fallbacks: false}
+
 # PRIMARY metric: estimated compute per successful task.
 #   compute per call (FLOPs, ESTIMATE) = 2 × active_params × (input_tokens + output_tokens)
 #   per successful task = total compute of ALL calls (incl. failures, escalations) / number correct

@@ -163,11 +163,15 @@ def next_config(cfg: dict, current: dict, unavailable: list[str] = ()) -> tuple[
     نتخطى النماذج غير المتاحة."""
     info = model_info(cfg, current["model"])
     efforts = cfg["reasoning_efforts"]
-    if (info.get("supports_reasoning_effort") and current["effort"] != efforts[-1]
-            and current["model"] not in unavailable):
+    agent_cfg = cfg["agent"]
+    # مفاتيح الإيقاف لتجارب الحذف (ablations): بدون مفتاح التفكير لا نرفع التفكير، وبدون مفتاح النموذج لا نكبّر النموذج
+    if (agent_cfg.get("escalate_effort", True) and info.get("supports_reasoning_effort")
+            and current["effort"] != efforts[-1] and current["model"] not in unavailable):
         new_effort = efforts[efforts.index(current["effort"]) + 1]
         return ({**current, "effort": new_effort},
                 f"raise effort {current['effort']} → {new_effort} on {_short(current['model'])}")
+    if not agent_cfg.get("escalate_model", True):
+        return None, "no escalation step left (model escalation is turned off)"
     size = SIZE_ORDER.index(info["size"])
     for bigger_size in SIZE_ORDER[size + 1:]:
         bigger = [m for m, i in cfg["models"].items() if i["size"] == bigger_size and m not in unavailable]

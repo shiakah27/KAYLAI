@@ -15,6 +15,7 @@ COLUMNS = {
     "final": "TEXT", "correct": "INTEGER", "escalated": "INTEGER",
     "reasoning_lang": "TEXT", "think_lang_followed": "INTEGER", "answer_in_arabic": "INTEGER",
     "finish_reason": "TEXT", "cached": "INTEGER", "error": "TEXT",
+    "provider": "TEXT", "route": "TEXT",
 }
 
 
@@ -24,6 +25,11 @@ def connect(path: str | Path) -> sqlite3.Connection:
     conn = sqlite3.connect(path)
     cols = ", ".join(f"{k} {v}" for k, v in COLUMNS.items())
     conn.execute(f"CREATE TABLE IF NOT EXISTS calls (id INTEGER PRIMARY KEY AUTOINCREMENT, {cols})")
+    # قاعدة قديمة بدون أعمدة جديدة (مثل provider): نضيفها
+    existing = {row[1] for row in conn.execute("PRAGMA table_info(calls)")}
+    for k, v in COLUMNS.items():
+        if k not in existing:
+            conn.execute(f"ALTER TABLE calls ADD COLUMN {k} {v}")
     return conn
 
 
@@ -41,6 +47,7 @@ def log_call(conn: sqlite3.Connection, result, *, run_id: str, config_name: str,
         "reasoning_lang": result.reasoning_lang, "think_lang_followed": result.think_lang_followed,
         "answer_in_arabic": result.answer_in_arabic,
         "finish_reason": result.finish_reason, "cached": result.cached, "error": result.error,
+        "provider": result.provider, "route": result.route,
     }
     keys = ", ".join(row)
     marks = ", ".join("?" for _ in row)

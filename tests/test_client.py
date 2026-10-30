@@ -130,3 +130,27 @@ def test_daily_limit_stops_instead_of_waiting(monkeypatch, tmp_path):
     monkeypatch.setattr(litellm, "completion", daily)
     with pytest.raises(client.DailyLimitError):
         client.call_model(CFG, TASK, "openai/gpt-oss-20b", "low", "en", cache=DiskCache(tmp_path))
+
+
+def test_gpt_oss_routed_via_openrouter_pinned_to_groq(fake_api, tmp_path):
+    r = client.call_model(CFG, TASK, "openai/gpt-oss-20b", "low", "en", cache=DiskCache(tmp_path))
+    assert fake_api[0]["model"] == "openrouter/openai/gpt-oss-20b"
+    assert fake_api[0]["params"]["extra_body"] == {"provider": {"only": ["groq"], "allow_fallbacks": False}}
+    assert r.route == "openrouter" and r.error is None
+
+
+def test_allam_stays_on_groq(fake_api, tmp_path):
+    r = client.call_model(CFG, TASK, "allam-2-7b", None, "en", cache=DiskCache(tmp_path))
+    assert fake_api[0]["model"] == "groq/allam-2-7b" and "extra_body" not in fake_api[0]["params"]
+    assert r.route == "groq" and r.provider == "groq"
+
+
+def test_other_provider_is_rejected(monkeypatch, tmp_path):
+    def other(model, messages, **params):
+        resp = FakeResponse("ANSWER: خمسة\nFINAL: 5")
+        resp._d["provider"] = "SomeOtherCloud"
+        return resp
+
+    monkeypatch.setattr(litellm, "completion", other)
+    r = client.call_model(CFG, TASK, "openai/gpt-oss-20b", "low", "en", cache=DiskCache(tmp_path))
+    assert r.provider == "SomeOtherCloud" and r.error == "wrong_provider: SomeOtherCloud"
