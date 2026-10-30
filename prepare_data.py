@@ -6,7 +6,8 @@
   يبني ثلاثة أنواع من المهام، ولكل نوع 30 سؤال معايرة و30 سؤال اختبار (بذرة 42):
     1. math       — مسائل Arabic-GSM8K، التصحيح بالرقم النهائي.
     2. knowledge  — أسئلة اختيار من متعدد من ArabicMMLU، التصحيح بحرف الخيار الصحيح.
-    3. intent     — طلبات خدمات حكومية اصطناعية (فصحى + سعودية)، التصحيح باسم النية.
+    3. intent     — رسائل اصطناعية لروبوت خدمات حكومية (فصحى + سعودية)، 8 نوايا + other،
+                    التصحيح باسم النية.
   ومجموعة متانة: 20 مسألة إنجليزية من GSM8K الأصلي (اختبار فقط).
 
   الملفات الناتجة:
@@ -17,13 +18,14 @@
 لماذا بذرة ثابتة؟ لأن أي شخص يشغّل السكربت يحصل على نفس الأسئلة بالضبط
 (معيار 5: تشغيل قابل للتكرار).
 
-قبل التشغيل: بيانات النية تأتي من data/synthetic/intents_raw.jsonl
-(أنشأها generate_intents.py، وهي محفوظة في git، فلا حاجة لإعادة توليدها).
+قبل التشغيل: بيانات النية تأتي من data/synthetic/intents.csv
+(أنشأها generate_intents.py، وهي محفوظة في git، ويمكن تعديلها يدويًا).
 
 التشغيل:
     python prepare_data.py
 """
 
+import csv
 import json
 import random
 import re
@@ -33,7 +35,7 @@ from pathlib import Path
 GSM8K_AR = "Omartificial-Intelligence-Space/Arabic-gsm8k"
 GSM8K_EN = "openai/gsm8k"
 MMLU_AR = "MBZUAI/ArabicMMLU"
-INTENTS_RAW = Path("data/synthetic/intents_raw.jsonl")
+INTENTS_CSV = Path("data/synthetic/intents.csv")
 
 SEED = 42
 N_CALIBRATION = 30
@@ -134,33 +136,40 @@ def build_knowledge() -> tuple[list, list]:
     return picked[0::2], picked[1::2]
 
 
-# ---------- 3. intent: synthetic citizen service requests ----------
+# ---------- 3. intent: synthetic citizen service messages ----------
 
 def build_intent() -> tuple[list, list]:
-    """لكل نية: 3 طلبات في المعايرة و3 في الاختبار.
-    اللهجة متوازنة: كل ملف فيه 15 فصحى و15 سعودية."""
-    raw = [json.loads(line) for line in INTENTS_RAW.open(encoding="utf-8")]
+    """لكل نية من الثماني: 3 رسائل في المعايرة و3 في الاختبار.
+    لـ other: 6 في المعايرة (3 فصحى + 3 سعودي) و6 في الاختبار.
+    المجموع 30 لكل ملف، واللهجة متوازنة: 15 فصحى و15 سعودية."""
+    with INTENTS_CSV.open(encoding="utf-8-sig", newline="") as f:
+        raw = list(csv.DictReader(f))
     labels = sorted({r["intent"] for r in raw})
+    assert len({r["text"] for r in raw}) == len(raw), "رسائل مكررة في intents.csv"
 
-    cells = defaultdict(list)  # (intent, dialect) -> طلبات بدون تكرار
+    cells = defaultdict(list)  # (intent, dialect) -> رسائل
     for i, r in enumerate(raw):
-        if r["text"] not in {x["question"] for x in cells[(r["intent"], r["dialect"])]}:
-            cells[(r["intent"], r["dialect"])].append({
-                "id": f"intent-{i}", "type": "intent", "question": r["text"],
-                "choices": labels, "answer": r["intent"], "dialect": r["dialect"],
-                "synthetic": True,
-            })
+        cells[(r["intent"], r["dialect"])].append({
+            "id": f"intent-{i}", "type": "intent", "question": r["text"],
+            "choices": labels, "answer": r["intent"], "dialect": r["dialect"],
+            "synthetic": True,
+            "human_reviewed": r["human_reviewed"].strip().lower() == "true",
+        })
 
     cal, test = [], []
-    for k, intent in enumerate(labels):
-        msa = shuffled(cells[(intent, "msa")])[:3]
-        sa = shuffled(cells[(intent, "saudi")])[:3]
-        assert len(msa) == 3 and len(sa) == 3, intent
-        if k % 2 == 0:  # بالتناوب: مرة 2 فصحى + 1 سعودي، ومرة العكس
-            cal += msa[:2] + sa[:1]; test += msa[2:] + sa[1:]
-        else:
-            cal += msa[:1] + sa[:2]; test += msa[1:] + sa[2:]
-    print(f"intent: {len(raw)} طلبًا اصطناعيًا، {len(labels)} نوايا.")
+    for k, intent in enumerate(l for l in labels if l != "other"):
+        msa, sa = shuffled(cells[(intent, "msa")]), shuffled(cells[(intent, "saudi")])
+        a, b = (2, 1) if k % 2 == 0 else (1, 2)  # بالتناوب: (فصحى، سعودي) في المعايرة
+        assert len(msa) >= a + b and len(sa) >= a + b, intent
+        cal += msa[:a] + sa[:b]
+        test += msa[a:a + b] + sa[b:b + a]
+    msa, sa = shuffled(cells[("other", "msa")]), shuffled(cells[("other", "saudi")])
+    assert len(msa) >= 6 and len(sa) >= 6, "other"
+    cal += msa[:3] + sa[:3]
+    test += msa[3:6] + sa[3:6]
+
+    n_reviewed = sum(r["human_reviewed"].strip().lower() == "true" for r in raw)
+    print(f"intent: {len(raw)} رسالة اصطناعية، {len(labels)} أصناف، راجعها إنسان: {n_reviewed}.")
     return shuffled(cal), shuffled(test)
 
 

@@ -14,7 +14,7 @@ Many Arabic tasks can be solved by a smaller model, or with less thinking.
 For each Arabic task, KAYL picks three "keys":
 
 1. **Which model**: small or large open-weight models on Groq
-   (`llama-3.1-8b-instant`, `openai/gpt-oss-20b`, `openai/gpt-oss-120b`).
+   (`allam-2-7b`, `openai/gpt-oss-20b`, `openai/gpt-oss-120b`).
 2. **How much the model thinks**: reasoning effort `low` / `medium` / `high`
    (only on the gpt-oss models).
 3. **Which language it thinks in**: Arabic or English reasoning. The answer is always in Arabic.
@@ -37,7 +37,7 @@ There are three Arabic task types. Each has 30 calibration and 30 held-out test 
 |---|---|---|
 | `math` | [Arabic-GSM8K](https://huggingface.co/datasets/Omartificial-Intelligence-Space/Arabic-gsm8k) (MIT) | The final number |
 | `knowledge` | [ArabicMMLU](https://huggingface.co/datasets/MBZUAI/ArabicMMLU) (CC-BY-NC-4.0), all 21 subjects | The option letter |
-| `intent` | **Synthetic** citizen service requests in MSA and Saudi dialect, 10 intents | The intent label |
+| `intent` | **Synthetic** chatbot messages in MSA and Saudi dialect: 8 intents plus `other` | The intent label |
 
 - `data/calibration.jsonl` (90 questions): the only data KAYL learns from.
 - `data/test.jsonl` (90 questions): held out and used only for the final evaluation.
@@ -70,5 +70,6 @@ All run on the same test set, at temperature 0, twice each.
 ## Configuration
 Models, prices, floors and generation limits all live in [config.yaml](config.yaml).
 The gpt-oss prices were checked against each model's Groq console page, and those links are in the config.
-The llama-3.1-8b-instant price is still unverified.
+The allam-2-7b price is not known yet. Until it is, we report estimated compute for that model instead of cost.
+(It replaced llama-3.1-8b-instant, which is no longer available on our Groq account.)
 The floors are starting values. They will be set from the baseline A results on calibration data.

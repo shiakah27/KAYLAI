@@ -8,14 +8,17 @@ provider: groq
 prices_checked_on: "2026-10-30"
 
 models:
-  llama-3.1-8b-instant:
-    litellm_id: groq/llama-3.1-8b-instant
+  # Replaced llama-3.1-8b-instant, which is no longer available on our Groq account (2026-10-30).
+  allam-2-7b:
+    litellm_id: groq/allam-2-7b
     size: small
-    # UNVERIFIED: not yet confirmed on Groq's official page.
-    input_price: 0.05
-    output_price: 0.08
+    # PRICE UNKNOWN: not yet confirmed. Check https://console.groq.com/docs/model/allam-2-7b
+    # Until a price is published, report estimated compute for this model instead of cost.
+    input_price: null
+    output_price: null
     price_verified: false
-    active_params_b: 8.0               # dense: all 8B params active per token
+    active_params_b: 7.0               # dense; from the model name (ALLaM 7B) — verify on the model card
+    context_window: 4096               # much smaller than gpt-oss (131k)
     supports_reasoning_effort: false   # no thinking control on this model
   openai/gpt-oss-20b:
     litellm_id: groq/openai/gpt-oss-20b
