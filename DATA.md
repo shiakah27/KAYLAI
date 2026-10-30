@@ -18,6 +18,23 @@ Every item has `id`, `type` (`math` / `knowledge` / `intent`), `question` and `a
 Knowledge and intent items also have `choices`.
 To rebuild everything, run `python prepare_data.py`. It makes no model calls. Intent data is read from the committed synthetic file.
 
+### Input size vs. model context
+`allam-2-7b` has a context window of only 4,096 tokens, and its output cap is set to 1,024 in `config.yaml`. The router skips it for any task that does not fit.
+Below are the estimated sizes of each item (question text plus choices, not counting the instructions). These were counted with LiteLLM's default token counter, not ALLaM's own tokenizer, so they are estimates:
+
+| Set / type | n | mean tokens | max tokens |
+|---|---|---|---|
+| calibration / math | 30 | 165 | 601 |
+| calibration / knowledge | 30 | 157 | 1,499 (a question with a long `Context` passage) |
+| calibration / intent | 30 | 67 | 75 |
+| test / math | 30 | 152 | 287 |
+| test / knowledge | 30 | 152 | 1,322 |
+| test / intent | 30 | 68 | 75 |
+| robustness_en / math | 20 | 61 | 87 |
+
+**With the current data, every item fits in ALLaM's context**, even after adding the instructions and the 1,024-token output cap.
+The context check still matters for robustness: longer inputs such as long contexts or multi-turn chats would be routed away from ALLaM.
+
 All three task types use seed 42 (`random.Random(42)`). The split code `assert`s that no id appears in both calibration and test, and we also checked that no question text appears in both.
 
 ---

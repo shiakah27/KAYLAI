@@ -23,12 +23,13 @@ Then it **verifies** the answer and **escalates** (more effort or a bigger model
 KAYL does not train any model. It only uses controls that already exist.
 
 ## Core metric
-**Cost per successful task** = total cost (including failed attempts and escalations) / number of correct answers.
+**Primary: estimated compute per successful task** = total estimated compute of all calls (including failed attempts and escalations) / number of correct answers.
 
-- Cost = (input_tokens × input_price + output_tokens × output_price) / 1,000,000, using token counts returned by the provider.
+- Compute per call ≈ 2 × active_params × (input + output tokens). This is an **estimate**, using the token counts returned by the API. Energy is not reported.
+- Compute is the primary metric because `allam-2-7b` has no published price, so dollars can't compare all three models.
+- **Secondary:** dollar cost per successful task, reported only when every call used a model with a verified price.
 - A configuration only counts if it meets the **accuracy floor** and **latency floor** in [config.yaml](config.yaml).
-- Secondary metric: **estimated compute per task** = 2 × active_params × total tokens. This is an estimate, not a measurement. Active parameters come from the official model cards. Energy is not reported.
-- Selection rule: among configurations predicted to meet both floors, pick the cheapest, and break ties by latency.
+- Selection rule: among configurations predicted to meet both floors, pick the one with the lowest compute per successful task, and break ties by latency.
 
 ## Data
 There are three Arabic task types. Each has 30 calibration and 30 held-out test questions, split with seed 42.
