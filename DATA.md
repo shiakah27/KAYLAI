@@ -203,7 +203,9 @@ After the relabels, the class counts are 8 per intent, except `file_complaint` a
 
   These are left for the human review.
 
-**Human review: pending.** All rows have `human_reviewed = false`.
+**Human review: pending (not started).** All rows have `human_reviewed = false`, and no result in this repo is based on human-checked intent labels.
+The review file is `data/synthetic/intents_review.csv`, with columns `id, text, intent, dialect, my_check`. The reviewer writes `ok` or a fix in `my_check`.
+Note that the final test was already run on the unreviewed labels, so any label fixes found by the review must be reported as a limitation of that run.
 To review, edit `intents.csv` by hand (fix `text`, `intent` or `dialect`, and set `human_reviewed` to `true`), then run `python prepare_data.py` again.
 Warning: running `generate_intents.py` again overwrites the CSV and erases the review.
 

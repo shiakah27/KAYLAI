@@ -50,9 +50,20 @@ Each cell is correct/30 · compute per success in TFLOPs (estimated).
 
 ### What this shows
 
-1. **KAYL used the least compute of all experiments.** It needed 2.56 TFLOPs per success, which is **49% less than A** (5.02). It was also the cheapest in dollars, at 27% of A's cost per success.
-2. **But KAYL lost 4 questions compared with A** (79 vs 83), and **it did not meet its own accuracy floor on math (25 vs 27) or intent (27 vs 28).** Its calibration choice (`20b-low` for every type) scored 27/30 on math and 28/30 on intent during calibration, but 25/30 and 27/30 on test. These are drops of 1–2 questions, which is within noise at n=30. By KAYL's own rule, though, it does **not** qualify on those two types.
-3. **The best configuration on test that met every floor was the "minus model key" ablation** (`120b-low`). It got 80/90, met all 3 floors, and used 3.47 TFLOPs per success (31% less than A). With this data, choosing 120b at low effort beat choosing the smaller model. The model key saved compute, but cost accuracy.
+**KAYL's choices were made on calibration data only, and they were not changed after we saw these test results.** Changing them now would be test leakage.
+
+1. **The trade-off.** KAYL used **about 49% less compute than A** (2.56 vs 5.02 TFLOPs per success), and about 27% of A's dollar cost per success. It got **4 fewer correct answers** (79/90 vs 83/90).
+2. **KAYL missed its own accuracy floors in math and intent by 1–2 questions:**
+   - math: 25/30, against a floor of 27/30
+   - intent: 27/30, against a floor of 28/30
+   - knowledge: 27/30, which met its floor of 19/30
+
+   By KAYL's own rule, it therefore does **not** qualify on math or intent in this test.
+3. **Why this can happen: 30 calibration questions per type is a small sample.**
+   - KAYL chose `20b-low` because, on calibration, it reached 27/30 in math (exactly the floor) and 28/30 in intent (exactly the floor). Each of these was the cheapest configuration that met the floor.
+   - With n = 30, one question is 3.3 points. A configuration that sits exactly on the floor can fall below it on new questions just from normal variation.
+   - A bigger calibration set, or a safety margin above the floor, would make the choice more robust. Both are possible future work, and **neither was applied here**.
+4. **Observation on the test set, not a choice.** The "minus model key" ablation (`120b-low` for every type) met all three floors on test (80/90) and used about 31% less compute than A (3.47 TFLOPs per success). We report this as an observation only. It came from looking at test results, so KAYL was **not** changed to use it.
 4. **Verify/escalate added nothing on this test.** All 90 KAYL answers passed verification, so there were 0 escalations, and **11 of the verified answers were wrong.** The verifier checks the answer *format* (valid number, letter or label, Arabic ANSWER line, not cut off), not whether the answer is correct. That is why "D minus verify/escalate" is identical to D.
 5. **The effort key matters.** Removing it (medium only) raised accuracy to 83/90 but more than doubled compute (5.52).
 6. **B (ALLaM) is the fastest but not "small" in compute.** It is a 7B dense model, so it costs more compute per token than gpt-oss-20b (3.6B active). Its math accuracy is very low (12/30).
@@ -90,7 +101,7 @@ We stopped this configuration. As a result, **the thinking-language key had no e
 | Dialect: MSA vs Saudi (intent) | done (from saved results) | 15 + 15 | KAYL: MSA 13/15, Saudi 14/15. A: 15/15, 14/15. B (ALLaM): 14/15, 14/15. | Synthetic messages. Dialect versions of math were not built. |
 | Noisy input (typos, Arabic-Indic digits) | **not run** | — | — | — |
 | Model outage with fallback: real | run, **not exercised** | 5 | 3/5 correct. No limit occurred, because gpt-oss-20b's quota had refilled, so the fallback never triggered. | `results/robustness_fallback_drill.json` |
-| Model outage with fallback: **simulated** | **not run yet** | — | Only covered by unit tests with a fake model (3 tests). | — |
+| Model outage with fallback: **SIMULATED** (config flag `simulated_outage: [gpt-oss-20b]`) | done | 5 | KAYL chose 20b-low as usual, and the call was refused. In **5/5** tasks it automatically fell back to **120b-low**, the next-best configuration meeting the floors, and recorded the reason ("20b is unavailable (SIMULATED outage set in config)"). **3/5 correct** (the real-condition drill on the same 5 items was also 3/5). 16.7 TFLOPs in total. 0 errors. | **Simulated, not a real provider outage.** Only 5 math items, from unused pool positions 60–64. `results/robustness_simulated_outage.json` |
 | Routing change (Groq direct → OpenRouter pinned to Groq) | happened for real | 634 calls | All replies came from Groq. Calibration and test latencies are not directly comparable (test latencies were lower). | Different network path |
 | Price change | **not run** | — | — | Can be recomputed offline from logged tokens |
 | Stricter accuracy or latency floors | **not run** | — | — | Can be recomputed offline from saved results |

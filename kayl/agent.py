@@ -23,7 +23,7 @@ from typing import Callable, TypedDict
 
 from langgraph.graph import END, START, StateGraph
 
-from kayl.client import CallResult, DailyLimitError, call_model
+from kayl.client import CallResult, DailyLimitError, ModelUnavailableError, call_model
 from kayl.config import accuracy_floor, fits_context, model_info
 from kayl.grading import AMBIGUOUS, INVALID, NO_FINAL, validate
 from kayl.prompts import build_messages
@@ -222,6 +222,8 @@ def build_agent(cfg: dict, profile: dict, call_fn: Callable[..., CallResult] = c
                     limit_reason = "hit its rate limit even after retries"
             except DailyLimitError:
                 limit_reason = "hit its daily token limit"
+            except ModelUnavailableError:
+                limit_reason = "is unavailable (SIMULATED outage set in config)"
             if limit_reason is None:
                 break
             # fallback: النموذج غير متاح الآن، ننتقل لأفضل إعداد على نموذج آخر

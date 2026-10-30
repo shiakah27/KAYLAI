@@ -1,0 +1,331 @@
+{
+  "label": "SIMULATED outage (config flag), not a real provider outage",
+  "unavailable_models": [
+    "openai/gpt-oss-20b"
+  ],
+  "run_id": "3f1b7c75",
+  "items": 5,
+  "correct": 3,
+  "tasks_with_fallback": 5,
+  "fallback_targets": [
+    "120b-low"
+  ],
+  "total_compute_flops": 16717800000000.0,
+  "records": [
+    {
+      "task_id": "gsm8k-ar-1048",
+      "task_type": "math",
+      "final": "9861",
+      "answer_text": "السعر في عام 2010 هو حوالي 9861 دولارًا",
+      "verified": true,
+      "escalations": 0,
+      "fallbacks": [
+        {
+          "from": "20b-low",
+          "to": "120b-low",
+          "reason": "fallback: 20b is unavailable (SIMULATED outage set in config); switched to 120b-low: lowest estimated compute per success (3.56 TFLOPs) among 3 configurations meeting the floors (accuracy ≥ 90.0% (baseline A 120b-medium 28/30 minus 1 question), p95 latency ≤ 15 s); calibration accuracy 28/30"
+        }
+      ],
+      "decisions": [
+        {
+          "step": "estimate",
+          "reason": "task type 'math' is given by the task; calibration profile has 8 configurations measured on up to 30 items"
+        },
+        {
+          "step": "choose",
+          "reason": "chose 20b-low: lowest estimated compute per success (2.54 TFLOPs) among 4 configurations meeting the floors (accuracy ≥ 90.0% (baseline A 120b-medium 28/30 minus 1 question), p95 latency ≤ 15 s); calibration accuracy 27/30"
+        },
+        {
+          "step": "fallback",
+          "reason": "fallback: 20b is unavailable (SIMULATED outage set in config); switched to 120b-low: lowest estimated compute per success (3.56 TFLOPs) among 3 configurations meeting the floors (accuracy ≥ 90.0% (baseline A 120b-medium 28/30 minus 1 question), p95 latency ≤ 15 s); calibration accuracy 28/30"
+        },
+        {
+          "step": "solve",
+          "reason": "solved with 120b-low (120b, effort low, thinking in English): 187 in / 134 out tokens, 3.27 TFLOPs"
+        },
+        {
+          "step": "verify",
+          "reason": "passed: FINAL '9861' is valid for a math task (one number) and the ANSWER is in Arabic"
+        },
+        {
+          "step": "finish",
+          "reason": "accepted the answer from 120b-low after 0 escalation(s) and 1 fallback(s)"
+        }
+      ],
+      "attempts": [
+        {
+          "config": "120b-low",
+          "model": "openai/gpt-oss-120b",
+          "effort": "low",
+          "think_lang": "en",
+          "final": "9861",
+          "verified": true,
+          "verify_reason": "passed: FINAL '9861' is valid for a math task (one number) and the ANSWER is in Arabic",
+          "input_tokens": 187,
+          "output_tokens": 134,
+          "compute_flops": 3274200000000.0,
+          "cost_usd": 0.00010845,
+          "latency_s": 1.199272416997701,
+          "cached": false
+        }
+      ],
+      "total_compute_flops": 3274200000000.0,
+      "total_cost_usd": 0.00010845,
+      "total_latency_s": 1.199272416997701,
+      "gold": "7400",
+      "correct": false
+    },
+    {
+      "task_id": "gsm8k-ar-1242",
+      "task_type": "math",
+      "final": "20",
+      "answer_text": "عدد القبعات البيضاء هو 20",
+      "verified": true,
+      "escalations": 0,
+      "fallbacks": [
+        {
+          "from": "20b-low",
+          "to": "120b-low",
+          "reason": "fallback: 20b is unavailable (SIMULATED outage set in config); switched to 120b-low: lowest estimated compute per success (3.56 TFLOPs) among 3 configurations meeting the floors (accuracy ≥ 90.0% (baseline A 120b-medium 28/30 minus 1 question), p95 latency ≤ 15 s); calibration accuracy 28/30"
+        }
+      ],
+      "decisions": [
+        {
+          "step": "estimate",
+          "reason": "task type 'math' is given by the task; calibration profile has 8 configurations measured on up to 30 items"
+        },
+        {
+          "step": "choose",
+          "reason": "chose 20b-low: lowest estimated compute per success (2.54 TFLOPs) among 4 configurations meeting the floors (accuracy ≥ 90.0% (baseline A 120b-medium 28/30 minus 1 question), p95 latency ≤ 15 s); calibration accuracy 27/30"
+        },
+        {
+          "step": "fallback",
+          "reason": "fallback: 20b is unavailable (SIMULATED outage set in config); switched to 120b-low: lowest estimated compute per success (3.56 TFLOPs) among 3 configurations meeting the floors (accuracy ≥ 90.0% (baseline A 120b-medium 28/30 minus 1 question), p95 latency ≤ 15 s); calibration accuracy 28/30"
+        },
+        {
+          "step": "solve",
+          "reason": "solved with 120b-low (120b, effort low, thinking in English): 207 in / 107 out tokens, 3.20 TFLOPs"
+        },
+        {
+          "step": "verify",
+          "reason": "passed: FINAL '20' is valid for a math task (one number) and the ANSWER is in Arabic"
+        },
+        {
+          "step": "finish",
+          "reason": "accepted the answer from 120b-low after 0 escalation(s) and 1 fallback(s)"
+        }
+      ],
+      "attempts": [
+        {
+          "config": "120b-low",
+          "model": "openai/gpt-oss-120b",
+          "effort": "low",
+          "think_lang": "en",
+          "final": "20",
+          "verified": true,
+          "verify_reason": "passed: FINAL '20' is valid for a math task (one number) and the ANSWER is in Arabic",
+          "input_tokens": 207,
+          "output_tokens": 107,
+          "compute_flops": 3202800000000.0,
+          "cost_usd": 9.525e-05,
+          "latency_s": 0.7421802919707261,
+          "cached": false
+        }
+      ],
+      "total_compute_flops": 3202800000000.0,
+      "total_cost_usd": 9.525e-05,
+      "total_latency_s": 0.7421802919707261,
+      "gold": "20",
+      "correct": true
+    },
+    {
+      "task_id": "gsm8k-ar-172",
+      "task_type": "math",
+      "final": "19",
+      "answer_text": "الإجمالي هو 19",
+      "verified": true,
+      "escalations": 0,
+      "fallbacks": [
+        {
+          "from": "20b-low",
+          "to": "120b-low",
+          "reason": "fallback: 20b is unavailable (SIMULATED outage set in config); switched to 120b-low: lowest estimated compute per success (3.56 TFLOPs) among 3 configurations meeting the floors (accuracy ≥ 90.0% (baseline A 120b-medium 28/30 minus 1 question), p95 latency ≤ 15 s); calibration accuracy 28/30"
+        }
+      ],
+      "decisions": [
+        {
+          "step": "estimate",
+          "reason": "task type 'math' is given by the task; calibration profile has 8 configurations measured on up to 30 items"
+        },
+        {
+          "step": "choose",
+          "reason": "chose 20b-low: lowest estimated compute per success (2.54 TFLOPs) among 4 configurations meeting the floors (accuracy ≥ 90.0% (baseline A 120b-medium 28/30 minus 1 question), p95 latency ≤ 15 s); calibration accuracy 27/30"
+        },
+        {
+          "step": "fallback",
+          "reason": "fallback: 20b is unavailable (SIMULATED outage set in config); switched to 120b-low: lowest estimated compute per success (3.56 TFLOPs) among 3 configurations meeting the floors (accuracy ≥ 90.0% (baseline A 120b-medium 28/30 minus 1 question), p95 latency ≤ 15 s); calibration accuracy 28/30"
+        },
+        {
+          "step": "solve",
+          "reason": "solved with 120b-low (120b, effort low, thinking in English): 218 in / 251 out tokens, 4.78 TFLOPs"
+        },
+        {
+          "step": "verify",
+          "reason": "passed: FINAL '19' is valid for a math task (one number) and the ANSWER is in Arabic"
+        },
+        {
+          "step": "finish",
+          "reason": "accepted the answer from 120b-low after 0 escalation(s) and 1 fallback(s)"
+        }
+      ],
+      "attempts": [
+        {
+          "config": "120b-low",
+          "model": "openai/gpt-oss-120b",
+          "effort": "low",
+          "think_lang": "en",
+          "final": "19",
+          "verified": true,
+          "verify_reason": "passed: FINAL '19' is valid for a math task (one number) and the ANSWER is in Arabic",
+          "input_tokens": 218,
+          "output_tokens": 251,
+          "compute_flops": 4783800000000.0,
+          "cost_usd": 0.00018329999999999998,
+          "latency_s": 0.7380842919810675,
+          "cached": false
+        }
+      ],
+      "total_compute_flops": 4783800000000.0,
+      "total_cost_usd": 0.00018329999999999998,
+      "total_latency_s": 0.7380842919810675,
+      "gold": "51",
+      "correct": false
+    },
+    {
+      "task_id": "gsm8k-ar-971",
+      "task_type": "math",
+      "final": "100",
+      "answer_text": "سيحتاج روبرت إلى مئة لوح خشبي.",
+      "verified": true,
+      "escalations": 0,
+      "fallbacks": [
+        {
+          "from": "20b-low",
+          "to": "120b-low",
+          "reason": "fallback: 20b is unavailable (SIMULATED outage set in config); switched to 120b-low: lowest estimated compute per success (3.56 TFLOPs) among 3 configurations meeting the floors (accuracy ≥ 90.0% (baseline A 120b-medium 28/30 minus 1 question), p95 latency ≤ 15 s); calibration accuracy 28/30"
+        }
+      ],
+      "decisions": [
+        {
+          "step": "estimate",
+          "reason": "task type 'math' is given by the task; calibration profile has 8 configurations measured on up to 30 items"
+        },
+        {
+          "step": "choose",
+          "reason": "chose 20b-low: lowest estimated compute per success (2.54 TFLOPs) among 4 configurations meeting the floors (accuracy ≥ 90.0% (baseline A 120b-medium 28/30 minus 1 question), p95 latency ≤ 15 s); calibration accuracy 27/30"
+        },
+        {
+          "step": "fallback",
+          "reason": "fallback: 20b is unavailable (SIMULATED outage set in config); switched to 120b-low: lowest estimated compute per success (3.56 TFLOPs) among 3 configurations meeting the floors (accuracy ≥ 90.0% (baseline A 120b-medium 28/30 minus 1 question), p95 latency ≤ 15 s); calibration accuracy 28/30"
+        },
+        {
+          "step": "solve",
+          "reason": "solved with 120b-low (120b, effort low, thinking in English): 208 in / 68 out tokens, 2.82 TFLOPs"
+        },
+        {
+          "step": "verify",
+          "reason": "passed: FINAL '100' is valid for a math task (one number) and the ANSWER is in Arabic"
+        },
+        {
+          "step": "finish",
+          "reason": "accepted the answer from 120b-low after 0 escalation(s) and 1 fallback(s)"
+        }
+      ],
+      "attempts": [
+        {
+          "config": "120b-low",
+          "model": "openai/gpt-oss-120b",
+          "effort": "low",
+          "think_lang": "en",
+          "final": "100",
+          "verified": true,
+          "verify_reason": "passed: FINAL '100' is valid for a math task (one number) and the ANSWER is in Arabic",
+          "input_tokens": 208,
+          "output_tokens": 68,
+          "compute_flops": 2815200000000.0,
+          "cost_usd": 7.2e-05,
+          "latency_s": 0.5155009579611942,
+          "cached": false
+        }
+      ],
+      "total_compute_flops": 2815200000000.0,
+      "total_cost_usd": 7.2e-05,
+      "total_latency_s": 0.5155009579611942,
+      "gold": "100",
+      "correct": true
+    },
+    {
+      "task_id": "gsm8k-ar-707",
+      "task_type": "math",
+      "final": "8",
+      "answer_text": "النسبة هي 8٪ من إجمالي مياه النهر.",
+      "verified": true,
+      "escalations": 0,
+      "fallbacks": [
+        {
+          "from": "20b-low",
+          "to": "120b-low",
+          "reason": "fallback: 20b is unavailable (SIMULATED outage set in config); switched to 120b-low: lowest estimated compute per success (3.56 TFLOPs) among 3 configurations meeting the floors (accuracy ≥ 90.0% (baseline A 120b-medium 28/30 minus 1 question), p95 latency ≤ 15 s); calibration accuracy 28/30"
+        }
+      ],
+      "decisions": [
+        {
+          "step": "estimate",
+          "reason": "task type 'math' is given by the task; calibration profile has 8 configurations measured on up to 30 items"
+        },
+        {
+          "step": "choose",
+          "reason": "chose 20b-low: lowest estimated compute per success (2.54 TFLOPs) among 4 configurations meeting the floors (accuracy ≥ 90.0% (baseline A 120b-medium 28/30 minus 1 question), p95 latency ≤ 15 s); calibration accuracy 27/30"
+        },
+        {
+          "step": "fallback",
+          "reason": "fallback: 20b is unavailable (SIMULATED outage set in config); switched to 120b-low: lowest estimated compute per success (3.56 TFLOPs) among 3 configurations meeting the floors (accuracy ≥ 90.0% (baseline A 120b-medium 28/30 minus 1 question), p95 latency ≤ 15 s); calibration accuracy 28/30"
+        },
+        {
+          "step": "solve",
+          "reason": "solved with 120b-low (120b, effort low, thinking in English): 197 in / 62 out tokens, 2.64 TFLOPs"
+        },
+        {
+          "step": "verify",
+          "reason": "passed: FINAL '8' is valid for a math task (one number) and the ANSWER is in Arabic"
+        },
+        {
+          "step": "finish",
+          "reason": "accepted the answer from 120b-low after 0 escalation(s) and 1 fallback(s)"
+        }
+      ],
+      "attempts": [
+        {
+          "config": "120b-low",
+          "model": "openai/gpt-oss-120b",
+          "effort": "low",
+          "think_lang": "en",
+          "final": "8",
+          "verified": true,
+          "verify_reason": "passed: FINAL '8' is valid for a math task (one number) and the ANSWER is in Arabic",
+          "input_tokens": 197,
+          "output_tokens": 62,
+          "compute_flops": 2641800000000.0,
+          "cost_usd": 6.675e-05,
+          "latency_s": 0.4142016250407323,
+          "cached": false
+        }
+      ],
+      "total_compute_flops": 2641800000000.0,
+      "total_cost_usd": 6.675e-05,
+      "total_latency_s": 0.4142016250407323,
+      "gold": "8",
+      "correct": true
+    }
+  ]
+}

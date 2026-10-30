@@ -73,6 +73,10 @@ class DailyLimitError(RuntimeError):
     """وصلنا الحد اليومي لهذا النموذج: الانتظار دقيقة لا يفيد، نتوقف ونكمل لاحقًا من الكاش."""
 
 
+class ModelUnavailableError(RuntimeError):
+    """النموذج معلَّم كغير متاح في config.yaml (simulated_outage): انقطاع مُحاكى لاختبار المتانة."""
+
+
 def _wait_seconds(error: Exception, attempt: int, retry_cfg: dict) -> float:
     """كم ننتظر قبل المحاولة التالية: ما يقوله Groq ("try again in 1.2s" أو "1m26.4s") إن وُجد،
     وإلا انتظار يتضاعف (2، 4، 8...) حتى حد أقصى."""
@@ -120,6 +124,8 @@ def call_model(cfg: dict, task: dict, model: str, effort: str | None, think_lang
     format_example: None = القيمة من config.yaml (prompts.format_example)."""
     import litellm
 
+    if model in (cfg.get("simulated_outage") or {}).get("unavailable_models", []):
+        raise ModelUnavailableError(f"{model} is marked unavailable (SIMULATED outage)")
     info = model_info(cfg, model)
     if effort is not None and not info.get("supports_reasoning_effort"):
         raise ValueError(f"{model} does not support reasoning_effort")

@@ -303,3 +303,14 @@ def test_escalation_switches_for_ablations():
     no_model = copy.deepcopy(CFG); no_model["agent"]["escalate_model"] = False
     conf, _ = next_config(no_model, {**cur, "effort": "high"})
     assert conf is None
+
+
+def test_simulated_outage_fallback_is_labelled():
+    from kayl.client import ModelUnavailableError
+
+    def unavailable(model, effort, lang):
+        raise ModelUnavailableError("marked unavailable (SIMULATED outage)")
+
+    out = run_agent(MATH, CFG, PROFILE, FakeModel({("openai/gpt-oss-20b", "low"): unavailable}))
+    assert out["verified"] and out["attempts"][-1]["config"] == "120b-low"
+    assert "SIMULATED" in out["fallbacks"][0]["reason"]

@@ -134,6 +134,12 @@ agent:
   max_escalations: 2
   min_calibration_n: 20   # ignore a configuration measured on fewer items (e.g. an interrupted sweep)
 
+# SIMULATED outage, for robustness tests only: models listed here are treated as unavailable
+# (the client refuses to call them, even from cache). Normal runs keep this list EMPTY.
+# run_simulated_outage.py sets it in memory to [openai/gpt-oss-20b]; this file is not changed.
+simulated_outage:
+  unavailable_models: []
+
 # Used if a call errors after retries, and by the agent when a task type has no calibration data.
 fallback_model: openai/gpt-oss-20b
 

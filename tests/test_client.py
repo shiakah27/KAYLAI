@@ -154,3 +154,17 @@ def test_other_provider_is_rejected(monkeypatch, tmp_path):
     monkeypatch.setattr(litellm, "completion", other)
     r = client.call_model(CFG, TASK, "openai/gpt-oss-20b", "low", "en", cache=DiskCache(tmp_path))
     assert r.provider == "SomeOtherCloud" and r.error == "wrong_provider: SomeOtherCloud"
+
+
+def test_simulated_outage_blocks_model_even_from_cache(fake_api, tmp_path):
+    import copy
+    cache = DiskCache(tmp_path)
+    client.call_model(CFG, TASK, "openai/gpt-oss-20b", "low", "en", cache=cache)  # now cached
+    cfg = copy.deepcopy(CFG); cfg["simulated_outage"]["unavailable_models"] = ["openai/gpt-oss-20b"]
+    with pytest.raises(client.ModelUnavailableError, match="SIMULATED"):
+        client.call_model(cfg, TASK, "openai/gpt-oss-20b", "low", "en", cache=cache)
+    assert len(fake_api) == 1
+
+
+def test_simulated_outage_is_off_by_default():
+    assert CFG["simulated_outage"]["unavailable_models"] == []
