@@ -1,10 +1,10 @@
-# Rashid (رشيد) — single source of truth for models, prices, and floors.
+# KAYL (كَيْل) — single source of truth for models, prices, and floors.
 # Code reads everything from here; nothing is hard-coded.
 
 provider: groq
 
-# Prices are USD per 1M tokens.
-# Source: https://groq.com/pricing (Groq official pricing page)
+# Prices are USD per 1M tokens, taken from each model's page in the Groq
+# console docs (source URL is noted next to each model below).
 prices_checked_on: "2026-10-30"
 
 models:
@@ -15,23 +15,35 @@ models:
     input_price: 0.05
     output_price: 0.08
     price_verified: false
+    active_params_b: 8.0               # dense: all 8B params active per token
     supports_reasoning_effort: false   # no thinking control on this model
   openai/gpt-oss-20b:
     litellm_id: groq/openai/gpt-oss-20b
     size: medium
-    # Verified 2026-10-30 at https://groq.com/pricing
+    # Verified 2026-10-30 at https://console.groq.com/docs/model/openai/gpt-oss-20b
     input_price: 0.075
     output_price: 0.30
     price_verified: true
+    active_params_b: 3.6               # MoE; source: https://huggingface.co/blog/welcome-openai-gpt-oss
     supports_reasoning_effort: true    # low / medium / high
   openai/gpt-oss-120b:
     litellm_id: groq/openai/gpt-oss-120b
     size: large
-    # Verified 2026-10-30 at https://groq.com/pricing
+    # Verified 2026-10-30 at https://console.groq.com/docs/model/openai/gpt-oss-120b
     input_price: 0.15
     output_price: 0.60
     price_verified: true
+    active_params_b: 5.1               # MoE; source: https://huggingface.co/blog/welcome-openai-gpt-oss
     supports_reasoning_effort: true
+
+# Secondary metric, reported next to cost. It is an ESTIMATE, not a measurement:
+#   estimated_compute_flops = 2 × active_params × (input_tokens + output_tokens)
+# Energy is NOT reported: we cannot measure Groq's hardware.
+metrics:
+  estimated_compute:
+    formula: "2 * active_params * total_tokens"
+    label: "estimated compute (FLOPs, estimate)"
+  report_energy: false
 
 reasoning_efforts: [low, medium, high]
 
@@ -58,4 +70,4 @@ fallback_model: openai/gpt-oss-20b
 paths:
   data: data
   cache: cache
-  db: runs/rashid.sqlite
+  db: runs/kayl.sqlite

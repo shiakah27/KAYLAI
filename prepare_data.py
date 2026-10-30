@@ -1,13 +1,13 @@
 # -*- coding: utf-8 -*-
 """
-رشيد — تجهيز البيانات
+كَيْل — تجهيز البيانات
 
 ماذا يفعل:
   1. يحمّل مسائل Arabic-GSM8K (مجموعة الاختبار) من Hugging Face.
   2. يستخرج الجواب النهائي (الرقم بعد ####).
   3. يختار عينة عشوائية ببذرة ثابتة، ويقسمها:
-       - معايرة (calibration): يتعلم منها رشيد.
-       - اختبار (test): لا يراها رشيد إلا في التقييم النهائي.
+       - معايرة (calibration): يتعلم منها كَيْل.
+       - اختبار (test): لا يراها كَيْل إلا في التقييم النهائي.
   4. يحفظهما في data/ بصيغة JSONL.
 
 لماذا بذرة ثابتة؟ لأن أي شخص يشغّل السكربت يحصل على نفس الأسئلة بالضبط
@@ -57,11 +57,15 @@ def final_answer(answer_field: str) -> str | None:
 
 
 def load_test_split():
+    """يحمّل مجموعة الاختبار. في هذه النسخة اسمها main_test (وليس test)."""
     from datasets import load_dataset
     try:
-        return load_dataset(DATASET, "main", split="test")
+        return load_dataset(DATASET, split="main_test")
     except Exception:
-        return load_dataset(DATASET, split="test")
+        try:
+            return load_dataset(DATASET, "main", split="test")
+        except Exception:
+            return load_dataset(DATASET, split="test")
 
 
 def main():
