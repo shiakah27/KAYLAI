@@ -38,6 +38,7 @@ GSM8K_AR = "Omartificial-Intelligence-Space/Arabic-gsm8k"
 GSM8K_EN = "openai/gsm8k"
 MMLU_AR = "MBZUAI/ArabicMMLU"
 INTENTS_CSV = Path("data/synthetic/intents.csv")
+INTENTS_REVIEW = Path("data/synthetic/intents_review.csv")  # المراجعة اليدوية (my_check لكل صف)
 
 SEED = 42
 N_CALIBRATION = 30
@@ -132,13 +133,22 @@ def build_intent() -> tuple[list, list]:
     labels = sorted({r["intent"] for r in raw})
     assert len({r["text"] for r in raw}) == len(raw), "رسائل مكررة في intents.csv"
 
+    # نتيجة المراجعة اليدوية لكل صف (ok / not natural / ambiguous)، من ملف المراجعة إن وُجد.
+    # المراجعة لا تحذف أي صف: كل الصفوف تبقى، ومعها نتيجة المراجعة.
+    review = {}
+    if INTENTS_REVIEW.exists():
+        with INTENTS_REVIEW.open(encoding="utf-8-sig", newline="") as f:
+            review = {r["id"]: r["my_check"].strip() for r in csv.DictReader(f) if r["my_check"].strip()}
+
     cells = defaultdict(list)  # (intent, dialect) -> رسائل
     for i, r in enumerate(raw):
+        rid = f"intent-{i}"
         cells[(r["intent"], r["dialect"])].append({
-            "id": f"intent-{i}", "type": "intent", "question": r["text"],
+            "id": rid, "type": "intent", "question": r["text"],
             "choices": labels, "answer": r["intent"], "dialect": r["dialect"],
             "synthetic": True,
-            "human_reviewed": r["human_reviewed"].strip().lower() == "true",
+            "human_reviewed": rid in review,
+            "review": review.get(rid),
         })
 
     cal, test = [], []
@@ -153,8 +163,7 @@ def build_intent() -> tuple[list, list]:
     cal += msa[:3] + sa[:3]
     test += msa[3:6] + sa[3:6]
 
-    n_reviewed = sum(r["human_reviewed"].strip().lower() == "true" for r in raw)
-    print(f"intent: {len(raw)} رسالة اصطناعية، {len(labels)} أصناف، راجعها إنسان: {n_reviewed}.")
+    print(f"intent: {len(raw)} رسالة اصطناعية، {len(labels)} أصناف، راجعها إنسان: {len(review)}.")
     return shuffled(cal), shuffled(test)
 
 

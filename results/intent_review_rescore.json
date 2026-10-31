@@ -1,0 +1,91 @@
+{
+  "flagged_test_ids": [
+    "intent-27",
+    "intent-5",
+    "intent-62",
+    "intent-76",
+    "intent-78"
+  ],
+  "scores": {
+    "B allam (fewest tokens)": {
+      "all": [
+        28,
+        30
+      ],
+      "reviewed_ok": [
+        24,
+        25
+      ]
+    },
+    "D KAYL": {
+      "all": [
+        27,
+        30
+      ],
+      "reviewed_ok": [
+        23,
+        25
+      ]
+    },
+    "A 120b-medium (largest)": {
+      "all": [
+        29,
+        30
+      ],
+      "reviewed_ok": [
+        25,
+        25
+      ]
+    },
+    "C 20b-medium (cheapest price)": {
+      "all": [
+        28,
+        30
+      ],
+      "reviewed_ok": [
+        23,
+        25
+      ]
+    },
+    "E question-length proxy": {
+      "all": [
+        28,
+        30
+      ],
+      "reviewed_ok": [
+        23,
+        25
+      ]
+    },
+    "D minus verify/escalate": {
+      "all": [
+        27,
+        30
+      ],
+      "reviewed_ok": [
+        23,
+        25
+      ]
+    },
+    "D minus model key (120b only)": {
+      "all": [
+        29,
+        30
+      ],
+      "reviewed_ok": [
+        25,
+        25
+      ]
+    },
+    "D minus effort key (medium only)": {
+      "all": [
+        30,
+        30
+      ],
+      "reviewed_ok": [
+        25,
+        25
+      ]
+    }
+  }
+}

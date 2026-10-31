@@ -203,14 +203,28 @@ After the relabels, the class counts are 8 per intent, except `file_complaint` a
 
   These are left for the human review.
 
-**Human review: pending (not started).** All rows have `human_reviewed = false`, and no result in this repo is based on human-checked intent labels.
-The review file is `data/synthetic/intents_review.csv`, with columns `id, text, intent, dialect, my_check`. The reviewer writes `ok` or a fix in `my_check`.
-Note that the final test was already run on the unreviewed labels, so any label fixes found by the review must be reported as a limitation of that run.
-To review, edit `intents.csv` by hand (fix `text`, `intent` or `dialect`, and set `human_reviewed` to `true`), then run `python prepare_data.py` again.
-Warning: running `generate_intents.py` again overwrites the CSV and erases the review.
+**Human review: done.** An AI model (`qwen/qwen3.8-27b`) generated the intent data, and the project author reviewed **all 80 rows by hand** in `data/synthetic/intents_review.csv` (column `my_check`).
+
+| Review result | Rows | In calibration | In test | Unused |
+|---|---|---|---|---|
+| ok | 72 | 28 | 25 | 19 |
+| not natural | 5 | 2 | 2 | 1 |
+| ambiguous | 3 | 0 | 3 | 0 |
+
+Flagged rows:
+- **not natural:** `intent-5` (test), `intent-61` (calibration), `intent-76` (test), `intent-77` (calibration), `intent-79` (unused)
+- **ambiguous:** `intent-27`, `intent-62`, `intent-78` (all three in test)
+
+The review **did not change any text or label, and no row was removed**.
+- Every intent item in `calibration.jsonl` and `test.jsonl` carries `human_reviewed: true` and `review: ok | not natural | ambiguous`. `prepare_data.py` adds these from the review file.
+- The split, ids, questions and answers are identical to before the review (we checked this).
+- The final test had already been run before the review. RESULTS.md therefore reports intent scores twice: on all 30 test rows, and on the 25 test rows marked `ok`. See `results/intent_review_rescore.json`.
+- KAYL's choices were **not** changed. The calibration profile still includes the 2 flagged calibration rows.
+
+Warning: running `generate_intents.py` again overwrites `intents.csv`. The review file stays, but its ids would no longer match the regenerated rows.
 
 **Limitations:**
-- **The labels come from the generation prompt.** Until the human review is done, a label is the intent the message was *generated for*, not a checked judgment.
+- **The labels come from the generation prompt and were checked by one person.** One reviewer marked 8 of 80 rows as not natural or ambiguous; the rows were kept and flagged, not fixed. There is no second reviewer, so agreement between reviewers is unknown.
 - **The dialects are a model's imitation.** The MSA/Saudi split is blurry (see above).
 - **The messages are shorter and cleaner than real traffic.** There are almost no typos, every message has a single intent, and only one class (`other`) covers anything off-topic.
 - **Small sample.** With 3 messages per intent per split, we cannot report accuracy for each intent.
