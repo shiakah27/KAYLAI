@@ -67,7 +67,7 @@ CSS = """
   --text:#FFFFFF; --muted:#A9BDB4; --line:rgba(255,255,255,0.12); --card:rgba(255,255,255,0.035);
 }
 #MainMenu, header[data-testid="stHeader"], footer, [data-testid="stToolbar"], [data-testid="stDecoration"],
-[data-testid="stStatusWidget"], [data-testid="collapsedControl"] {display:none !important;}
+[data-testid="stStatusWidget"], [data-testid="collapsedControl"], [data-testid="stSkillsNudge"] {display:none !important;}
 .stApp{background:radial-gradient(circle at 100% 0%, var(--glow) 0%, rgba(4,26,35,0) 42%), var(--bg); color:var(--text);
   font-family:'Inter',sans-serif;}
 .block-container{padding-top:2.2rem; padding-bottom:3rem; max-width:1180px;}
