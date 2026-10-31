@@ -52,6 +52,7 @@ source .venv/bin/activate
 pip install -r requirements.txt
 cp .env.example .env        # then put your GROQ_API_KEY in .env
 python prepare_data.py      # rebuilds the data/ splits (no model calls)
+streamlit run app.py        # demo UI; Replay mode plays recorded runs with no API calls
 # Optional: python generate_intents.py regenerates the synthetic intent data (calls Groq).
 # Its output is already committed, so you do not need to run it.
 ```
