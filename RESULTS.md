@@ -87,6 +87,37 @@ Only 1 of KAYL's 3 wrong intent answers was on a flagged row (`intent-62`, which
 6. **The effort key matters.** Removing it (medium only) raised accuracy to 83/90 but more than doubled compute (5.52).
 7. **B (ALLaM) is the fastest but not "small" in compute.** It is a 7B dense model, so it costs more compute per token than gpt-oss-20b (3.6B active). Its math accuracy is very low (12/30).
 
+## Error analysis (KAYL's 11 wrong test answers)
+
+Read-only: built from `results/final_test.jsonl` and KAYL's recorded reasoning in `cache/llm/`, with no new calls. Every wrong answer came from `20b-low` and passed verification. The categories were assigned by hand from the reasoning, and the math items were compared with the English GSM8K originals.
+
+| Task | Question (short) | Gold | KAYL | Category |
+|---|---|---|---|---|
+| math `gsm8k-ar-754` | Trading stickers for buttons | 89 | 107 | Misread question: ignored "a large button is worth three small stickers" |
+| math `gsm8k-ar-242` | Pen-pal pages, hours writing per week | 3 | 6 | Misread question: counted the pages he receives as pages he writes |
+| math `gsm8k-ar-628` | Years until tall enough for a ride | 4 | 8 | Misread question: read "انشين" (two inches) as one inch |
+| math `gsm8k-ar-1136` | Marbles after gaining and losing some | 26 | 38 | Translation error in the data: the Arabic says "twelve" where the English says "2 dozen". 38 is correct for the Arabic text, but it is still scored wrong. |
+| math `gsm8k-ar-361` | Train miles between services | 20 | 15 | Translation problem: the Arabic phrasing of the return distance is garbled |
+| knowledge `arabicmmlu-2847` | A book by King Hussein bin Talal | B | A | Wrong option: missing fact |
+| knowledge `arabicmmlu-7161` | What a quote about dialogue calls for | B | A | Wrong option: interpretive question |
+| knowledge `arabicmmlu-7139` | Which thinking error a quote reflects | B | A | Wrong option: interpretive question |
+| intent `intent-51` | When social-security data is updated | social_support_inquiry | other | Label confusion: chose `other` over a matching label |
+| intent `intent-57` | An employee refused to take my paper | file_complaint | other | Label confusion: chose `other` over a matching label |
+| intent `intent-62` | Why the paperwork is not done after two months | file_complaint | renew_national_id | Flagged row (marked ambiguous in the review) |
+
+| Category | math | knowledge | intent | Total |
+|---|---|---|---|---|
+| Misread question | 3 | — | — | 3 |
+| Translation problem in the data | 2 | — | — | 2 |
+| Wrong option: interpretive question | — | 2 | — | 2 |
+| Wrong option: missing fact | — | 1 | — | 1 |
+| Label confusion (chose `other`) | — | — | 2 | 2 |
+| Flagged row | — | — | 1 | 1 |
+| Arithmetic slip / format issue | 0 | 0 | 0 | 0 |
+| **Total** | **5** | **3** | **3** | **11** |
+
+**What it suggests:** none of the errors were arithmetic slips or format problems, so a stricter format check would not have caught them. The next version needs a cheap signal of whether the answer is correct. Two examples: escalate when two low-effort answers disagree, or when the ANSWER line only repeats the question (this happened in 754 and 361). It should also have a clearer definition of `other` in the intent prompt. These ideas are untested, and KAYL was not changed.
+
 ## Calibration sweep (n = 30 per type, one run, Groq direct)
 
 The full tables are in [results/calibration_sweep.md](results/calibration_sweep.md). Overall:
