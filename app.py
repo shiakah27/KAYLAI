@@ -494,6 +494,12 @@ def set_example_text(task: dict) -> str:
 
 
 KIND_OF = {"math": "Math", "knowledge": "Knowledge", "intent": "Intent"}
+PLAIN_DIGITS = str.maketrans("٠١٢٣٤٥٦٧٨٩٪٫٬", "0123456789%.,")
+
+
+def plain_digits(text: str) -> str:
+    """ASCII digits and separators, so an example still matches when shown with Arabic-Indic digits."""
+    return text.translate(PLAIN_DIGITS)
 
 
 def set_example(key: str):
@@ -562,8 +568,8 @@ def main():
             if go:
                 tid = st.session_state.get("example")
                 example = calibration_tasks().get(tid)
-                if example and set_example_text(example) == text.strip():
-                    task = example
+                if example and plain_digits(set_example_text(example)) == plain_digits(text.strip()):
+                    task = example  # send the dataset text, with its original digits
                 else:
                     task, _ = build_task(text, kind)
                 cfg, label = case_config(), "Live run"

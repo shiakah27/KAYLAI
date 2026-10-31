@@ -203,7 +203,9 @@ def build_agent(cfg: dict, profile: dict, call_fn: Callable[..., CallResult] = c
         n = max((s["n"] for s in measured.values()), default=0)
         why += (f"; calibration profile has {len(measured)} configurations measured on up to {n} items"
                 if measured else "; no calibration profile for this type")
-        return {"task_type": task_type, "attempts": [], "escalations": 0, "unavailable": [], "fallbacks": [],
+        # Free-text tasks have no type field; later steps build prompts from task["type"].
+        return {"task": {**state["task"], "type": task_type}, "task_type": task_type,
+                "attempts": [], "escalations": 0, "unavailable": [], "fallbacks": [],
                 "decisions": _decide(state, "estimate", why)}
 
     def choose(state: AgentState) -> dict:

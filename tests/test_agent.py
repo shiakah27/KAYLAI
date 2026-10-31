@@ -197,6 +197,13 @@ def test_infer_type_without_type_field():
     assert "given by the task" in infer_type(MATH)[1]
 
 
+def test_free_text_task_without_type_field_runs():
+    # live UI input has no type field; the inferred type must reach prompts and the model call
+    task = {k: v for k, v in MATH.items() if k != "type"}
+    out = run_agent(task, CFG, PROFILE, FakeModel())
+    assert out["task_type"] == "math" and out["verified"]
+
+
 def test_knowledge_task_end_to_end():
     profile = {"knowledge": {"20b-low": stats(0.9, 2.0)}}
     fake = FakeModel({("openai/gpt-oss-20b", "low"): lambda m, e, l: good_reply(m, e, l, final="B")})
