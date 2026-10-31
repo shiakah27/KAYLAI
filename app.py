@@ -23,7 +23,7 @@ from pathlib import Path
 import litellm
 import streamlit as st
 
-from kayl.agent import run_agent
+from kayl.agent import infer_type, run_agent
 from kayl.client import call_model
 from kayl.config import accuracy_floor, load_config
 from kayl.grading import normalize_label
@@ -273,6 +273,18 @@ def config_label(cfg: dict, name: str | None, model: str | None = None, effort: 
     return f"{PRETTY_MODEL.get(model, model)} · {effort + ' effort' if effort else 'no effort control'}"
 
 
+def display_final(task_type: str, final: str | None) -> str:
+    """قيمة FINAL للعرض فقط: جواب الرياضيات بأرقام عربية مشرقية؛ الحرف واسم النية كما هما."""
+    if not final:
+        return "—"
+    return ar_num(final) if task_type == "math" else final
+
+
+def display_reason(task_type: str, reason: str) -> str:
+    """في سجل القرارات: الجواب المقتبس (FINAL '...') بأرقام عربية للعرض فقط؛ باقي النص الإنجليزي كما هو."""
+    return re.sub(r"FINAL '([^']*)'", lambda m: f"FINAL '{display_final(task_type, m.group(1))}'", reason)
+
+
 def step_result(d: dict, out: dict, cfg: dict, attempt_no: int) -> tuple[str, str]:
     """(النص القصير تحت الخطوة، الحالة)."""
     step, why = d["step"], d["reason"]
@@ -287,7 +299,7 @@ def step_result(d: dict, out: dict, cfg: dict, attempt_no: int) -> tuple[str, st
             (" · SIMULATED outage" if "SIMULATED" in why else ""), "fail"
     if step == "solve":
         a = out["attempts"][attempt_no]
-        return f"FINAL {a['final'] or '—'} · {a['input_tokens']} in / {a['output_tokens']} out tokens", "done"
+        return f"FINAL {display_final(out['task_type'], a['final'])} · {a['input_tokens']} in / {a['output_tokens']} out tokens", "done"
     if step == "verify":
         ok = why.startswith("passed")
         return ("Passed: valid format, Arabic answer" if ok else why.removeprefix("failed: ").capitalize()), \
@@ -409,7 +421,8 @@ def results_view(r: dict, cfg: dict, animate: bool):
 
     with st.expander("Every decision, with its reason"):
         for d in out["decisions"]:
-            st.markdown(f'<div class="k-label">{esc(d["step"])}</div><div style="margin-bottom:.5rem">{esc(d["reason"])}</div>',
+            st.markdown(f'<div class="k-label">{esc(d["step"])}</div>'
+                        f'<div style="margin-bottom:.5rem">{esc(display_reason(out["task_type"], d["reason"]))}</div>',
                         unsafe_allow_html=True)
 
 
@@ -461,10 +474,24 @@ def set_example_text(task: dict) -> str:
     return text.strip()
 
 
+KIND_OF = {"math": "Math", "knowledge": "Knowledge", "intent": "Intent"}
+
+
 def set_example(key: str):
+    """زر المثال: يملأ النص، ويجعل قائمة نوع المهمة تطابق نوع المثال."""
     _, tid = EXAMPLES[key]
-    st.session_state["prompt"] = set_example_text(calibration_tasks()[tid])
+    task = calibration_tasks()[tid]
+    st.session_state["prompt"] = set_example_text(task)
     st.session_state["example"] = tid
+    st.session_state["kind"] = KIND_OF[task["type"]]
+
+
+def sync_kind():
+    """عند تعديل النص: قائمة نوع المهمة تطابق النوع الذي يكتشفه كَيْل من النص."""
+    text = st.session_state.get("prompt", "")
+    if text.strip():
+        task, _ = build_task(text, "Auto")
+        st.session_state["kind"] = KIND_OF[infer_type(task)[0]]
 
 
 def main():
@@ -500,9 +527,18 @@ def main():
             b1.button("Math", on_click=set_example, args=("math",), type="secondary")
             b2.button("Knowledge", on_click=set_example, args=("knowledge",), type="secondary")
             b3.button("Saudi-dialect request", on_click=set_example, args=("intent",), type="secondary")
-            text = st.text_area("Arabic task", key="prompt", height=120,
+            text = st.text_area("Arabic task", key="prompt", height=120, on_change=sync_kind,
                                 placeholder="اكتب سؤالًا بالعربية… (للاختيار من متعدد: سطر لكل خيار مثل A) …)")
-            kind = st.selectbox("Task type", ["Auto", "Math", "Knowledge", "Intent"], index=0)
+            if (text or "").strip():  # نسخة للعرض فقط بأرقام عربية مشرقية؛ النموذج يستلم النص كما كُتب
+                lines = []
+                for line in text.strip().splitlines():
+                    m = OPTION_RE.match(line)  # حرف الخيار (A) …) معزول حتى لا تنقلب القوس من اليمين لليسار
+                    lines.append(f'<bdi dir="ltr">{esc(m.group(1))})</bdi> {esc(ar_num(m.group(2)))}' if m
+                                 else esc(ar_num(line)))
+                st.markdown(f'<div class="k-card k-ar" dir="rtl" style="margin:.2rem 0 .8rem;unicode-bidi:isolate">'
+                            f'{"<br>".join(lines)}</div>', unsafe_allow_html=True)
+            st.session_state.setdefault("kind", "Auto")
+            kind = st.selectbox("Task type", ["Auto", "Math", "Knowledge", "Intent"], key="kind")
             go = st.button("Run KAYL", disabled=not (text or "").strip())
             if go:
                 tid = st.session_state.get("example")
