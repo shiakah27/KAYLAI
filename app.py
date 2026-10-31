@@ -54,7 +54,7 @@ REPLAYS = [  # (key, title, source, task id, label, overrides)
      {"route": "openrouter", "unavailable": ["openai/gpt-oss-20b"]}),
 ]
 PIPELINE = [("understand", "Understand task"), ("choose", "Choose model & effort"), ("answer", "Answer"),
-            ("verify", "Verify"), ("escalate", "Escalate only if needed")]
+            ("verify", "Format check"), ("escalate", "Escalate only if needed")]
 STEP_OF = {"estimate": "understand", "choose": "choose", "fallback": "choose", "solve": "answer",
            "verify": "verify", "escalate": "escalate"}
 
@@ -103,6 +103,7 @@ p, label, .stMarkdown {color:var(--text);}
 .k-metrics{display:grid; grid-template-columns:repeat(4,1fr); gap:.6rem; margin-bottom:1rem;}
 .k-metric .v{font-family:'JetBrains Mono'; font-size:1.55rem; font-weight:600; margin-top:.25rem;}
 .k-metric .u{font-family:'JetBrains Mono'; font-size:.78rem; color:var(--muted);}
+.k-note{font-size:.7rem; color:var(--muted); line-height:1.35; margin-top:.35rem;}
 .k-badge{display:inline-block; border-radius:999px; padding:.15rem .7rem; font-family:'JetBrains Mono'; font-size:.85rem; font-weight:600;}
 .k-badge.yes{background:rgba(0,207,144,.15); color:var(--mint); border:1px solid var(--mint);}
 .k-badge.no{background:rgba(232,115,90,.12); color:#E8735A; border:1px solid #E8735A;}
@@ -303,8 +304,8 @@ def step_result(d: dict, out: dict, cfg: dict, attempt_no: int) -> tuple[str, st
         return f"FINAL {display_final(out['task_type'], a['final'])} · {a['input_tokens']} in / {a['output_tokens']} out tokens", "done"
     if step == "verify":
         ok = why.startswith("passed")
-        return ("Passed: valid format, Arabic answer" if ok else why.removeprefix("failed: ").capitalize()), \
-            ("done" if ok else "fail")
+        return ("PASS · format and language checked, correctness not checked" if ok
+                else "FAIL · " + why.removeprefix("failed: ")), ("done" if ok else "fail")
     if step == "escalate":
         return why.split(": ", 1)[1].split(", because")[0].capitalize(), "active"
     return why, "done"
@@ -339,7 +340,7 @@ def animate_pipeline(placeholder, out: dict, cfg: dict, animate: bool):
             results.setdefault(key, []).append(text)
         states[key] = state if state != "active" else "done"
     if "escalate" not in results:
-        results["escalate"] = ["Not needed — verification passed"] if out["verified"] else ["No step left"]
+        results["escalate"] = ["Not needed — format check passed"] if out["verified"] else ["No step left"]
         states["escalate"] = "skip"
     placeholder.markdown(pipeline_html(states, results), unsafe_allow_html=True)
 
@@ -363,7 +364,7 @@ def reason_sentence(out: dict, cfg: dict) -> str:
     for d in out["decisions"]:
         if d["step"] == "escalate":
             step, because = d["reason"].split(": ", 1)[1].split(", because ")
-            text += f" Verification failed ({because}), so it chose to {step}."
+            text += f" The format check failed ({because}), so it chose to {step}."
     return text
 
 
@@ -380,12 +381,12 @@ def results_view(r: dict, cfg: dict, animate: bool):
     tokens = sum(a["input_tokens"] + a["output_tokens"] for a in out["attempts"])
     latency = sum(a["latency_s"] or 0 for a in out["attempts"])
     compute = out["total_compute_flops"]
-    badge = '<span class="k-badge yes">YES</span>' if out["verified"] else '<span class="k-badge no">NO</span>'
+    badge = '<span class="k-badge yes">PASS</span>' if out["verified"] else '<span class="k-badge no">FAIL</span>'
     st.markdown(f"""<div class="k-metrics">
       <div class="k-card k-metric"><div class="k-label">Tokens</div><div class="v">{tokens:,}</div><div class="u">input + output, from the API</div></div>
-      <div class="k-card k-metric"><div class="k-label">Latency</div><div class="v">{latency:.2f}<span class="u"> s</span></div><div class="u">{len(out['attempts'])} call(s)</div></div>
-      <div class="k-card k-metric"><div class="k-label">Est. compute</div><div class="v">{compute / 1e12:.2f}<span class="u"> TFLOPs</span></div><div class="u">all attempts</div></div>
-      <div class="k-card k-metric"><div class="k-label">Verified</div><div class="v">{badge}</div><div class="u">{len(out['fallbacks'])} fallback · {out['escalations']} escalation</div></div>
+      <div class="k-card k-metric"><div class="k-label">Latency</div><div class="v">{latency:.2f}<span class="u"> s</span></div><div class="u">{len(out['attempts'])} call(s) · {len(out['fallbacks'])} fallback · {out['escalations']} escalation</div></div>
+      <div class="k-card k-metric"><div class="k-label">Estimated model FLOPs</div><div class="v">{compute / 1e12:.2f}<span class="u"> TFLOPs</span></div><div class="u">all attempts</div><div class="k-note">Estimated from active parameters × provider-reported tokens. Not a hardware or energy measurement.</div></div>
+      <div class="k-card k-metric"><div class="k-label">Format check</div><div class="v">{badge}</div><div class="u">Format and language checked · correctness not checked</div></div>
     </div>""", unsafe_allow_html=True)
 
     c1, c2 = st.columns([3, 2], gap="large")
@@ -422,8 +423,12 @@ def results_view(r: dict, cfg: dict, animate: bool):
 
     with st.expander("Every decision, with its reason"):
         for d in out["decisions"]:
-            st.markdown(f'<div class="k-label">{esc(d["step"])}</div>'
-                        f'<div style="margin-bottom:.5rem">{esc(display_reason(out["task_type"], d["reason"]))}</div>',
+            step = "format check" if d["step"] == "verify" else d["step"]
+            reason = display_reason(out["task_type"], d["reason"])
+            if d["step"] == "verify":
+                reason += " · correctness not checked"
+            st.markdown(f'<div class="k-label">{esc(step)}</div>'
+                        f'<div style="margin-bottom:.5rem">{esc(reason)}</div>',
                         unsafe_allow_html=True)
 
 
@@ -449,7 +454,7 @@ def results_tab():
     missed_txt = f" (missed {' and '.join(missed)} question(s))" if missed else ""
     st.markdown(f"""<div class="k-teal"><div class="k-label" style="color:#E6FFF6">Held-out test · 90 questions · one run · temperature 0</div>
       <div class="grid" style="margin-top:.6rem">
-        <div><div class="big">{saved:.0%}</div>less compute per correct answer than all-to-largest</div>
+        <div><div class="big">{saved:.0%}</div>lower estimated compute per correct answer than the largest-model baseline</div>
         <div><div class="big">{kayl['correct']}/{kayl['n']}</div>KAYL correct (all-to-largest: {big['correct']}/{big['n']})</div>
         <div><div class="big">{met} / {len(summ['D KAYL']) - 1}</div>task types where KAYL met its floors{esc(missed_txt)}</div>
       </div></div>""", unsafe_allow_html=True)

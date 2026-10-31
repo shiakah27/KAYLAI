@@ -5,7 +5,9 @@
 [![Python](https://img.shields.io/badge/python-3.14%20tested-3776AB?logo=python&logoColor=white)](requirements.txt)
 [![Tests](https://img.shields.io/badge/tests-329%20passing-brightgreen)](tests/)
 
-![KAYL replaying a recorded Arabic math run: it chose gpt-oss-20b at low effort and used 56% less compute than the largest model on the same task](docs/screenshots/replay_math.png)
+KAYL reduced estimated compute per correct answer by 49%, with 79/90 correct versus 83/90 for the largest-model baseline, and met its accuracy floor in 1 of 3 task types.
+
+![KAYL replaying a recorded Arabic math run: it chose gpt-oss-20b at low effort and used 56% less estimated compute than the largest model on the same task](docs/screenshots/replay_math.png)
 
 KAYL is an agent that answers Arabic tasks with the least compute that still meets an accuracy floor.
 It does not train any model: it only uses controls that already exist.
@@ -22,7 +24,7 @@ It does not train any model: it only uses controls that already exist.
 flowchart LR
     A["Estimate<br/>task type + calibration profile"] --> B["Choose<br/>model, effort, thinking language"]
     B --> C["Solve<br/>one model call"]
-    C --> D{"Verify<br/>FINAL valid? ANSWER in Arabic?<br/>not cut off?"}
+    C --> D{"Format check<br/>FINAL valid? ANSWER in Arabic?<br/>not cut off?<br/>(correctness not checked)"}
     D -- passed --> F["Finish"]
     D -- failed --> E["Escalate<br/>more effort, then a bigger model<br/>(at most 2)"]
     E --> C
@@ -42,7 +44,7 @@ For each task, KAYL picks three keys:
 
 ## Results
 
-**49% less compute than all-to-largest, with 79/90 vs 83/90 correct.** Held-out test: 90 questions (30 math, 30 knowledge, 30 intent), one run at temperature 0.
+**KAYL reduced estimated compute per correct answer by 49%, with 79/90 correct versus 83/90 for the largest-model baseline, and met its accuracy floor in 1 of 3 task types.** Held-out test: 90 questions (30 math, 30 knowledge, 30 intent), one run at temperature 0.
 
 | Experiment | Correct | Compute / success (TFLOPs, est.) | Cost / success | Types meeting the floors |
 |---|---|---|---|---|
@@ -76,7 +78,7 @@ Full tables, all ablations, robustness scenarios and the calibration sweep are i
 - **Thinking in Arabic was ignored (negative result).** Asked to reason in Arabic, gpt-oss-20b reasoned in English in **32 of 32** calls. That configuration was stopped, so the thinking-language key had no effect in this setup.
 - **Error analysis:** among KAYL's 11 wrong answers there were **0 arithmetic slips** and 0 format issues.
   - **3 of the 11 trace back to the data:** two Arabic-GSM8K translation problems and one intent row that the human review had flagged as ambiguous.
-  - Every wrong answer passed verification, because the verifier checks the format, not correctness.
+  - Every wrong answer passed the format check, because it checks format and language, not correctness.
 
 ## Quick start
 
