@@ -1,5 +1,4 @@
-# -*- coding: utf-8 -*-
-"""اختبارات العميل بنموذج مزيف (بدون استدعاءات API): الكاش، إعادة المحاولة، تجاوز السياق."""
+"""Client tests with a fake API (no real calls): cache, retries, context skip, provider pinning."""
 
 import litellm
 import pytest
@@ -27,7 +26,7 @@ class FakeResponse:
 
 @pytest.fixture
 def fake_api(monkeypatch):
-    """يستبدل litellm.completion ويعدّ الاستدعاءات."""
+    """Replaces litellm.completion and records the calls."""
     calls = []
 
     def fake_completion(model, messages, **params):
@@ -85,7 +84,7 @@ def test_task_too_long_for_allam_is_skipped(fake_api, tmp_path):
     long_task = {**TASK, "question": "كلمة " * 5000}
     r = client.call_model(CFG, long_task, "allam-2-7b", None, "en", cache=DiskCache(tmp_path))
     assert r.skipped and r.error == "context_too_long"
-    assert fake_api == []  # لم نستدعِ النموذج أصلًا
+    assert fake_api == []  # the model was never called
 
 
 def test_retry_on_rate_limit(monkeypatch, tmp_path):
@@ -102,7 +101,7 @@ def test_retry_on_rate_limit(monkeypatch, tmp_path):
     monkeypatch.setattr(client.time, "sleep", waits.append)
     r = client.call_model(CFG, TASK, "openai/gpt-oss-20b", "low", "en", cache=DiskCache(tmp_path))
     assert r.final == "5" and len(attempts) == 3
-    assert waits == [2.0, 2.0]  # 1.5s كما قال Groq + 0.5 هامش
+    assert waits == [2.0, 2.0]  # the 1.5s Groq asked for + 0.5s margin
 
 
 def test_error_after_all_retries_is_recorded(monkeypatch, tmp_path):

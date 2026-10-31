@@ -1,11 +1,10 @@
-# -*- coding: utf-8 -*-
-"""كشف لغة نص (عربي أم إنجليزي) لنتحقق: هل فكّر النموذج باللغة التي طلبناها؟
+"""Detect whether a text is Arabic or English, to check the model reasoned in the requested language.
 
-الطريقة بسيطة وقابلة للفحص: نعدّ الحروف العربية والحروف اللاتينية فقط
-(الأرقام والرموز لا تُحسب، لأن المعادلات لا تدل على اللغة).
+Simple and inspectable: count Arabic letters and Latin letters only. Digits and symbols are
+ignored, because equations say nothing about the language.
 
-قبل العدّ نحذف ما نسخه النموذج من السؤال (strip_copied)، لأن النموذج قد يفكر
-بالإنجليزية لكنه يقتبس جملة السؤال العربية، فيبدو تفكيره "mixed" وهو ليس كذلك."""
+Text copied from the question is removed first (strip_copied): a model reasoning in English
+often quotes the Arabic question, which would otherwise make its reasoning look "mixed"."""
 
 import re
 
@@ -14,14 +13,14 @@ LATIN_LETTER = re.compile(r"[A-Za-z]")
 QUOTED = re.compile(r"\"[^\"\n]*\"|“[^”\n]*”|«[^»\n]*»")
 WORD = re.compile(r"\w+")
 
-AR_THRESHOLD = 0.7   # نسبة الحروف العربية >= 0.7  -> "ar"
-EN_THRESHOLD = 0.3   # نسبة الحروف العربية <= 0.3  -> "en"، وبينهما "mixed"
-COPY_NGRAM = 4       # 4 كلمات متتالية موجودة في السؤال = نص منسوخ
+AR_THRESHOLD = 0.7   # Arabic letter share >= 0.7 -> "ar"
+EN_THRESHOLD = 0.3   # Arabic letter share <= 0.3 -> "en"; in between -> "mixed"
+COPY_NGRAM = 4       # 4 consecutive words found in the question count as copied
 
 
 def strip_copied(text: str | None, source: str | None) -> str | None:
-    """يحذف من text: (1) أي نص بين علامات تنصيص، (2) أي 4 كلمات متتالية موجودة في source.
-    ما يبقى هو كلام النموذج نفسه، وهو ما يدل على لغة تفكيره."""
+    """Remove from text (1) anything in quotes and (2) any 4 consecutive words found in source.
+    What is left is the model's own words, which show the language it reasons in."""
     if not text or not source:
         return text
     text = QUOTED.sub(" ", text)
@@ -36,7 +35,7 @@ def strip_copied(text: str | None, source: str | None) -> str | None:
 
 
 def arabic_ratio(text: str | None) -> float | None:
-    """نسبة الحروف العربية من كل الحروف. None إذا لا توجد حروف."""
+    """Share of Arabic letters among all letters, or None when there are no letters."""
     if not text:
         return None
     ar, lat = len(AR_LETTER.findall(text)), len(LATIN_LETTER.findall(text))
@@ -46,7 +45,7 @@ def arabic_ratio(text: str | None) -> float | None:
 
 
 def detect_lang(text: str | None) -> str:
-    """يرجع "ar" أو "en" أو "mixed"، أو "none" إذا لا يوجد نص."""
+    """"ar", "en" or "mixed", or "none" when there is no text."""
     r = arabic_ratio(text)
     if r is None:
         return "none"

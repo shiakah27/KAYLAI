@@ -1,5 +1,4 @@
-# -*- coding: utf-8 -*-
-"""اختبارات وكيل كَيْل بنموذج مزيف وملف معايرة مزيف: لا استدعاءات API إطلاقًا."""
+"""KAYL agent tests with a fake model and a fake calibration profile: no API calls."""
 
 import pytest
 
@@ -21,7 +20,7 @@ def stats(acc, tflops, p95_s=3.0, n=30):
             "avg_latency_s": p95_s / 2, "p95_latency_s": p95_s}
 
 
-# allam: الأرخص لكن دقته تحت الحد. 20b-low: الأرخص بين ما يحقق الحد.
+# allam is the cheapest but below the floor; 20b-low is the cheapest that meets it.
 PROFILE = {"math": {
     "allam": stats(0.60, 1.0),
     "20b-low": stats(0.90, 2.0),
@@ -39,7 +38,7 @@ def good_reply(conf_model, effort, think_lang, final="5", answer="الجواب �
 
 
 class FakeModel:
-    """يرجع ردًا حسب (النموذج، مستوى التفكير)؛ الافتراضي رد صحيح الشكل."""
+    """Replies by (model, effort); the default is a well-formed reply."""
 
     def __init__(self, replies=None):
         self.replies = replies or {}
@@ -208,7 +207,7 @@ def test_knowledge_task_end_to_end():
 def test_validate_without_gold():
     assert validate(MATH, "5") == (True, "ok")
     assert validate(MATH, "5 or 6")[0] is False
-    assert validate(KNOW, "E")[0] is False      # 4 خيارات فقط
+    assert validate(KNOW, "E")[0] is False      # only 4 options
     assert validate({"type": "intent", "choices": ["other"]}, "Other") == (True, "ok")
 
 
@@ -237,7 +236,7 @@ def test_floor_is_baseline_a_minus_one_question():
 
 
 def test_config_one_question_below_baseline_counts():
-    # baseline 28/30 -> floor 27/30: 20b-low (27/30) يحقق الحد، allam (26/30) لا
+    # baseline 28/30 -> floor 27/30: 20b-low (27/30) meets it, allam (26/30) does not
     profile = {"math": {"120b-medium": stats(28 / 30, 5.0), "20b-low": stats(27 / 30, 2.0),
                         "allam": stats(26 / 30, 1.0)}}
     out = run_agent(MATH, CFG, profile, FakeModel())
@@ -271,16 +270,16 @@ def rate_limited(model, effort, lang):
 def test_fallback_to_next_best_config_on_other_model(limited, words):
     fake = FakeModel({("openai/gpt-oss-20b", "low"): limited})
     out = run_agent(MATH, CFG, PROFILE, fake)
-    # 20b غير متاح -> أفضل إعداد على نموذج آخر يحقق الحد: 120b-low
+    # 20b unavailable -> the best configuration on another model that meets the floor: 120b-low
     assert fake.calls == [("openai/gpt-oss-20b", "low", "en"), ("openai/gpt-oss-120b", "low", "en")]
-    assert out["verified"] and out["escalations"] == 0  # الانتقال ليس تصعيدًا
+    assert out["verified"] and out["escalations"] == 0  # a fallback is not an escalation
     fb = out["fallbacks"][0]
     assert fb["from"] == "20b-low" and fb["to"] == "120b-low" and words in fb["reason"]
     assert steps(out) == ["estimate", "choose", "fallback", "solve", "verify", "finish"]
 
 
 def test_escalation_skips_unavailable_model():
-    # 20b وصل حده، ثم 120b-low فشل في التحقق -> رفع التفكير على 120b (وليس العودة لـ 20b)
+    # 20b hit its limit, then 120b-low failed verification -> raise effort on 120b (never back to 20b)
     fake = FakeModel({("openai/gpt-oss-20b", "low"): daily_limited, ("openai/gpt-oss-120b", "low"): no_final})
     out = run_agent(MATH, CFG, PROFILE, fake)
     assert fake.calls[-1] == ("openai/gpt-oss-120b", "medium", "en")

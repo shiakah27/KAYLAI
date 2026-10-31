@@ -1,5 +1,4 @@
-# -*- coding: utf-8 -*-
-"""اختبارات انحدار على البيانات المحفوظة: الأحجام، عدم التداخل، وأن كل جواب صحيح يمكن تصحيحه."""
+"""Regression tests on the committed data: sizes, no overlap, and every gold answer is gradable."""
 
 import json
 from collections import Counter
@@ -30,5 +29,5 @@ def test_no_overlap_between_calibration_and_test():
 
 @pytest.mark.parametrize("item", CAL + TEST + ROBUST, ids=lambda x: x["id"])
 def test_gold_answer_grades_as_correct(item):
-    # إذا أعطى النموذج الجواب الصحيح بالضبط، يجب أن يقبله المصحح
+    # a model that returns exactly the gold answer must be graded correct
     assert grade(item, item["answer"]).correct

@@ -1,22 +1,22 @@
-# -*- coding: utf-8 -*-
-"""وكيل كَيْل: رسم LangGraph بسيط من خمس خطوات لكل مهمة.
+"""The KAYL agent: a small LangGraph graph run once per task.
 
-    estimate -> choose -> solve -> verify --(نجح)--> finish
+    estimate -> choose -> solve -> verify --(passed)--> finish
                             ^          |
-                            |      (فشل، وتبقى محاولة)
+                            |      (failed, and an escalation is left)
                             +-- escalate
 
-  1. estimate : ما نوع المهمة؟ وما الذي تعلمناه عنها من المعايرة (calibration profile)؟
-  2. choose   : من الإعدادات التي تحقق حدَّي الدقة والزمن لهذا النوع، نختار الأقل حوسبة
-                لكل إجابة صحيحة (والتعادل بالزمن). نتجاوز allam إذا لم تتسع المهمة لسياقه.
-                حد الدقة لكل نوع = دقة baseline A ناقص سؤال واحد.
-  3. solve    : استدعاء النموذج بالإعداد المختار. إذا وصل النموذج حده (في الدقيقة أو اليومي)،
-                ننتقل تلقائيًا (fallback) لأفضل إعداد على نموذج آخر، ونسجل السبب.
-  4. verify   : بدون معرفة الجواب الصحيح: هل يوجد FINAL؟ هل هو صالح لنوع المهمة؟
-                هل جملة ANSWER بالعربية؟ هل انقطع الجواب؟
-  5. escalate : عند الفشل: نرفع مستوى التفكير أولًا، ثم ننتقل لنموذج أكبر. حدّ أقصى: تصعيدان.
+  1. estimate : the task type, and what the calibration profile says about it.
+  2. choose   : among configurations meeting the accuracy and latency floors for this type, the
+                one with the lowest compute per success (ties broken by latency). allam is skipped
+                when the task does not fit its context. Accuracy floor per type = baseline A's
+                calibration accuracy minus one question.
+  3. solve    : call the chosen configuration. If the model hits a rate or daily limit, or is
+                marked unavailable, fall back to the best configuration on another model.
+  4. verify   : without the gold answer: is there a FINAL line, is it valid for the task type,
+                is the ANSWER in Arabic, was the reply cut off?
+  5. escalate : on failure, raise the effort first, then move to a bigger model. At most two escalations.
 
-كل قرار يُحفظ مع سبب قصير يفهمه الإنسان (decisions)، لتعرضه الواجهة."""
+Every decision is stored with a short human-readable reason, which the UI displays."""
 
 import re
 from typing import Callable, TypedDict
@@ -44,11 +44,11 @@ TYPE_LABELS = {"math": "a math task (one number)", "knowledge": "a multiple-choi
 class AgentState(TypedDict, total=False):
     task: dict
     task_type: str
-    current: dict          # الإعداد الحالي: name, model, effort, think_lang, format_example
-    attempts: list[dict]   # كل محاولة: الإعداد + CallResult + نتيجة التحقق
+    current: dict          # name, model, effort, think_lang, format_example
+    attempts: list[dict]   # configuration + CallResult + verification result
     decisions: list[dict]  # [{"step": ..., "reason": ...}]
     escalations: int
-    unavailable: list[str]  # نماذج وصلت حدها أثناء هذه المهمة
+    unavailable: list[str]  # models that hit a limit during this task
     fallbacks: list[dict]   # [{"from": ..., "to": ..., "reason": ...}]
     verified: bool
 
@@ -68,7 +68,7 @@ def _short(model: str) -> str:
 
 
 def infer_type(task: dict) -> tuple[str, str]:
-    """نوع المهمة وسبب ذلك. نستخدم حقل type إن وُجد، وإلا نستنتج من شكل المهمة."""
+    """The task type and why: the type field when present, otherwise inferred from the task's shape."""
     if task.get("type") in TYPES:
         return task["type"], f"task type '{task['type']}' is given by the task"
     choices = task.get("choices") or []
@@ -80,7 +80,7 @@ def infer_type(task: dict) -> tuple[str, str]:
 
 
 def task_fits(cfg: dict, task: dict, conf: dict) -> tuple[bool, int]:
-    """هل تتسع المهمة لسياق نموذج هذا الإعداد؟ (نفس الفحص الذي يجريه العميل)."""
+    """Whether the task fits this configuration's context window (the same check as the client)."""
     import litellm
     info = model_info(cfg, conf["model"])
     fmt = conf.get("format_example", cfg["prompts"]["format_example"])
@@ -90,7 +90,7 @@ def task_fits(cfg: dict, task: dict, conf: dict) -> tuple[bool, int]:
 
 
 def _name(cfg: dict, conf: dict) -> str:
-    """اسم الإعداد من قائمة sweep إن وُجد، وإلا اسم مركب."""
+    """The sweep name of a configuration, or a composed name when it is not in the sweep."""
     default_fmt = cfg["prompts"]["format_example"]
     for c in cfg["sweep"]:
         if (c["model"], c["effort"], c["think_lang"]) == (conf["model"], conf["effort"], conf["think_lang"]) \
@@ -110,8 +110,8 @@ def _as_current(cfg: dict, c: dict) -> dict:
 
 def select_config(cfg: dict, profile: dict, task: dict, task_type: str,
                   exclude_models: list[str] = ()) -> tuple[dict | None, str]:
-    """قاعدة الاختيار: من الإعدادات التي تحقق حدَّي الدقة والزمن، الأقل حوسبة لكل إجابة صحيحة.
-    يرجع (الإعداد، السبب). exclude_models: نماذج غير متاحة الآن (وصلت حدها)."""
+    """Selection rule: among configurations meeting both floors, the lowest compute per success.
+    Returns (configuration, reason). exclude_models: models that are unavailable right now."""
     floors = cfg["floors"]
     measured = profile.get(task_type, {})
     acc_floor, acc_text = accuracy_floor(cfg, profile, task_type)
@@ -122,7 +122,7 @@ def select_config(cfg: dict, profile: dict, task: dict, task_type: str,
         if stats is None or c["model"] in exclude_models:
             continue
         if c.get("format_example", cfg["prompts"]["format_example"]) != cfg["prompts"]["format_example"]:
-            continue  # إعدادات القياس فقط (مثل allam-noex) ليست خيارًا للوكيل
+            continue  # measurement-only configurations (e.g. allam-noex) are not options for the agent
         if stats["n"] < cfg["agent"]["min_calibration_n"]:
             notes.append(f"{c['name']} ignored: measured on only {stats['n']} items")
             continue
@@ -159,12 +159,12 @@ def select_config(cfg: dict, profile: dict, task: dict, task_type: str,
 
 
 def next_config(cfg: dict, current: dict, unavailable: list[str] = ()) -> tuple[dict | None, str]:
-    """الخطوة التالية في سلم التصعيد: رفع التفكير أولًا، ثم نموذج أكبر (بنفس مستوى التفكير).
-    نتخطى النماذج غير المتاحة."""
+    """The next escalation step: raise the effort first, then a bigger model at the same effort.
+    Unavailable models are skipped."""
     info = model_info(cfg, current["model"])
     efforts = cfg["reasoning_efforts"]
     agent_cfg = cfg["agent"]
-    # مفاتيح الإيقاف لتجارب الحذف (ablations): بدون مفتاح التفكير لا نرفع التفكير، وبدون مفتاح النموذج لا نكبّر النموذج
+    # Ablation switches: without the effort key the effort is never raised; without the model key the model never grows.
     if (agent_cfg.get("escalate_effort", True) and info.get("supports_reasoning_effort")
             and current["effort"] != efforts[-1] and current["model"] not in unavailable):
         new_effort = efforts[efforts.index(current["effort"]) + 1]
@@ -179,7 +179,7 @@ def next_config(cfg: dict, current: dict, unavailable: list[str] = ()) -> tuple[
             model = bigger[0]
             effort = None
             if model_info(cfg, model).get("supports_reasoning_effort"):
-                effort = current["effort"] or efforts[0]  # لا ننزل في مستوى التفكير
+                effort = current["effort"] or efforts[0]  # never lower the effort
             conf = {"model": model, "effort": effort, "think_lang": current["think_lang"],
                     "format_example": cfg["prompts"]["format_example"]}
             return conf, f"move to the bigger model {_short(model)} (effort {effort or 'n/a'})"
@@ -187,14 +187,14 @@ def next_config(cfg: dict, current: dict, unavailable: list[str] = ()) -> tuple[
 
 
 def _is_limit(result: CallResult) -> bool:
-    """فشل الاستدعاء بسبب حد الطلبات حتى بعد إعادة المحاولة."""
+    """The call failed on a rate limit even after retries."""
     return bool(result.error) and result.error.startswith("RateLimitError")
 
 
 # ---------- graph ----------
 
 def build_agent(cfg: dict, profile: dict, call_fn: Callable[..., CallResult] = call_model):
-    """يبني رسم الوكيل. call_fn قابل للاستبدال (الاختبارات تمرر نموذجًا مزيفًا)."""
+    """Build the agent graph. call_fn is replaceable (tests pass a fake model)."""
     max_escalations = cfg["agent"]["max_escalations"]
 
     def estimate(state: AgentState) -> dict:
@@ -226,14 +226,13 @@ def build_agent(cfg: dict, profile: dict, call_fn: Callable[..., CallResult] = c
                 limit_reason = "is unavailable (SIMULATED outage set in config)"
             if limit_reason is None:
                 break
-            # fallback: النموذج غير متاح الآن، ننتقل لأفضل إعداد على نموذج آخر
             unavailable.append(c["model"])
             new, how = select_config(cfg, profile, state["task"], state["task_type"], unavailable)
             why = f"fallback: {_short(c['model'])} {limit_reason}; "
             if new is None:
                 decisions = decisions + [{"step": "fallback", "reason": why + "no other model is available"}]
                 r = CallResult(task_id=state["task"].get("id"), task_type=state["task_type"], model=c["model"],
-                               effort=c["effort"], think_lang=c["think_lang"], error=f"all models limited")
+                               effort=c["effort"], think_lang=c["think_lang"], error="all models limited")
                 break
             why += how.replace("chose ", "switched to ", 1)
             fallbacks.append({"from": c["name"], "to": new["name"], "reason": why})
@@ -307,7 +306,7 @@ def build_agent(cfg: dict, profile: dict, call_fn: Callable[..., CallResult] = c
 
 
 def run_agent(task: dict, cfg: dict, profile: dict, call_fn: Callable[..., CallResult] = call_model) -> dict:
-    """يحل مهمة واحدة ويرجع الجواب، وكل المحاولات، وكل القرارات مع أسبابها، والمجاميع."""
+    """Solve one task. Returns the answer, every attempt, every decision with its reason, and totals."""
     state = build_agent(cfg, profile, call_fn).invoke({"task": task})
     results = [a["result"] for a in state["attempts"]]
     last = results[-1]
@@ -324,9 +323,9 @@ def run_agent(task: dict, cfg: dict, profile: dict, call_fn: Callable[..., CallR
                       "compute_flops": a["result"].compute_flops, "cost_usd": a["result"].cost_usd,
                       "latency_s": a["result"].latency_s, "cached": a["result"].cached}
                      for a in state["attempts"]],
-        # المجاميع تشمل المحاولات الفاشلة (هكذا نحسب الحوسبة لكل إجابة صحيحة)
+        # Totals include failed attempts, as compute per success requires.
         "total_compute_flops": sum(r.compute_flops for r in results),
         "total_cost_usd": None if any(c is None for c in costs) else sum(costs),
         "total_latency_s": sum(r.latency_s or 0 for r in results),
-        "_results": results,  # لـ SQLite (لا تُعرض)
+        "_results": results,  # raw CallResults for logging; not displayed
     }

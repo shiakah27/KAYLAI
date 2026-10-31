@@ -1,8 +1,7 @@
-# -*- coding: utf-8 -*-
-"""ملف المعايرة (calibration profile): ماذا تعلّم كَيْل من بيانات المعايرة.
+"""Calibration profile: what KAYL learned from the calibration data.
 
-لكل (نوع مهمة، إعداد): الدقة، والحوسبة لكل إجابة صحيحة، ومتوسط الزمن، والزمن p95.
-يُبنى من results/calibration_sweep.jsonl (ناتج run_sweep.py)، أي من المعايرة فقط."""
+For each (task type, configuration): accuracy, compute per success, average latency and p95
+latency. Built from results/calibration_sweep.jsonl only, so it never sees test data."""
 
 import json
 import math
@@ -15,7 +14,7 @@ SWEEP_RESULTS = Path("results/calibration_sweep.jsonl")
 
 
 def p95(values: list[float]) -> float | None:
-    """الزمن الذي تقع تحته 95% من الاستدعاءات (طريقة nearest-rank، بسيطة وواضحة)."""
+    """95th percentile, nearest-rank method."""
     if not values:
         return None
     s = sorted(values)
@@ -23,8 +22,8 @@ def p95(values: list[float]) -> float | None:
 
 
 def build_profile(rows: list[dict]) -> dict:
-    """rows: صفوف فيها config, task_type, correct, compute_flops, latency_s.
-    يرجع {task_type: {config_name: {...}}}."""
+    """rows have config, task_type, correct, compute_flops and latency_s.
+    Returns {task_type: {config_name: stats}}."""
     groups = defaultdict(list)
     for r in rows:
         groups[(r["task_type"], r["config"])].append(r)
@@ -44,6 +43,6 @@ def build_profile(rows: list[dict]) -> dict:
 
 
 def load_profile(path: str | Path = SWEEP_RESULTS) -> dict:
-    """يبني الملف من نتائج المعايرة المحفوظة."""
+    """Build the profile from the saved calibration results."""
     with open(path, encoding="utf-8") as f:
         return build_profile([json.loads(line) for line in f])

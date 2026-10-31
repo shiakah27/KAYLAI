@@ -1,8 +1,6 @@
 # KAYL (كَيْل) — single source of truth for models, prices, and floors.
 # Code reads everything from here; nothing is hard-coded.
 
-provider: groq
-
 # Prices are USD per 1M tokens, taken from each model's page in the Groq
 # console docs (source URL is noted next to each model below).
 prices_checked_on: "2026-10-30"
@@ -12,7 +10,7 @@ models:
   allam-2-7b:
     litellm_id: groq/allam-2-7b
     size: small
-    # PRICE UNKNOWN: not yet confirmed. Check https://console.groq.com/docs/model/allam-2-7b
+    # PRICE UNKNOWN: Groq lists it as "Pending" at https://console.groq.com/docs/model/allam-2-7b
     # Until a price is published, report estimated compute for this model instead of cost.
     input_price: null
     output_price: null
@@ -52,6 +50,8 @@ models:
 #   openrouter -> openrouter_id with provider {only: [groq], allow_fallbacks: false}
 # Costs are always computed with the Groq prices above, not OpenRouter's bill.
 # The cache key includes the model id actually used, so the two routes never mix.
+# The run scripts take --route to override this without editing the file (the committed
+# calibration sweep and fallback drill used groq).
 routing:
   gpt_oss: openrouter
   openrouter_ids:
@@ -65,11 +65,7 @@ routing:
 # Why primary: allam-2-7b has no published price, so dollar cost cannot compare all models.
 # SECONDARY: dollar cost per successful task, reported only when every call used a
 # model with a verified price (otherwise shown as n/a). Energy is NOT reported.
-metrics:
-  primary: compute_per_success
-  secondary: cost_per_success
-  compute_label: "estimated compute (FLOPs, estimate)"
-  report_energy: false
+# The formulas are in kayl/metrics.py; they read active_params_b and the prices above.
 
 # Before calling a model, check the task fits its context window:
 #   estimated_prompt_tokens × safety_factor + max_output_tokens <= context_window
@@ -104,9 +100,10 @@ generation:
   temperature: 0
   max_output_tokens: 2048   # default cap (free-tier friendly); a model can override it
 
-runs_per_experiment: 2
+# One run per experiment: Groq's daily token limit did not allow a second run.
+runs_per_experiment: 1
 
-# Step 5: every fixed configuration on ALL calibration items (learning data only).
+# Every fixed configuration, run on ALL calibration items by scripts/run_sweep.py (learning data only).
 # "allam-noex" measures the format example. 20b-medium-ar (think in Arabic) was stopped:
 # its 32 results are kept in results/think_lang_ar_stopped.jsonl.
 sweep:
@@ -136,14 +133,14 @@ agent:
 
 # SIMULATED outage, for robustness tests only: models listed here are treated as unavailable
 # (the client refuses to call them, even from cache). Normal runs keep this list EMPTY.
-# run_simulated_outage.py sets it in memory to [openai/gpt-oss-20b]; this file is not changed.
+# scripts/run_simulated_outage.py sets it in memory to [openai/gpt-oss-20b]; this file is not changed.
 simulated_outage:
   unavailable_models: []
 
-# Used if a call errors after retries, and by the agent when a task type has no calibration data.
+# Used by the agent when a task type has no calibration data.
 fallback_model: openai/gpt-oss-20b
 
 paths:
   data: data
   cache: cache
-  db: runs/kayl.sqlite
+  db: results/kayl.sqlite   # local call log, not committed (it grows with every run)

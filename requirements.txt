@@ -1,8 +1,7 @@
 litellm>=1.50        # all model calls go through LiteLLM
-datasets>=2.19       # used by prepare_data.py to download Arabic-GSM8K
+datasets>=2.19       # downloads Arabic-GSM8K, ArabicMMLU and GSM8K (scripts/prepare_data.py, drill tasks)
 pyyaml>=6.0          # read config.yaml
-python-dotenv>=1.0   # load GROQ_API_KEY from .env
+python-dotenv>=1.0   # load API keys from .env
 pytest>=8.0          # tests
-tenacity>=8.2         # retries with backoff (used by LiteLLM num_retries)
 langgraph>=1.0       # the KAYL agent graph (kayl/agent.py)
 streamlit>=1.40      # demo UI (app.py)

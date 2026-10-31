@@ -1,5 +1,4 @@
-# -*- coding: utf-8 -*-
-"""اختبارات المصححات: رقم للرياضيات، حرف للمعرفة، اسم نية للتصنيف."""
+"""Grader tests: a number for math, a letter for knowledge, a label for intent."""
 
 import pytest
 
@@ -30,7 +29,7 @@ def test_math_wrong_number():
 
 
 def test_math_two_numbers_is_ambiguous():
-    # هذا ما فعله allam: جملة فيها 75 و30
+    # a real allam reply: a sentence containing both 75 and 30
     g = grade(MATH, "سينفق تيري 75 دولارًا على الزبادي خلال 30 يومًا.")
     assert not g.correct and g.reason == AMBIGUOUS
 
@@ -64,7 +63,7 @@ def test_knowledge_wrong_letter():
 
 @pytest.mark.parametrize("final", ["E", "the answer", "BC", "x"])
 def test_knowledge_invalid(final):
-    # E غير موجود لأن عدد الخيارات 4
+    # E does not exist with only 4 options
     assert grade(KNOW, final).reason == INVALID
 
 

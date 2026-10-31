@@ -1,5 +1,4 @@
-# -*- coding: utf-8 -*-
-"""قراءة config.yaml، وأسئلة بسيطة عن كل نموذج: هل يدعم مستوى التفكير؟ هل تتسع المهمة لسياقه؟"""
+"""Read config.yaml and answer simple questions about each model."""
 
 from functools import lru_cache
 from pathlib import Path
@@ -11,21 +10,21 @@ CONFIG_PATH = Path("config.yaml")
 
 @lru_cache(maxsize=None)
 def load_config(path: str | Path = CONFIG_PATH) -> dict:
-    """يقرأ ملف الإعدادات مرة واحدة ويحفظه في الذاكرة."""
+    """Read the config once per process."""
     with open(path, encoding="utf-8") as f:
         return yaml.safe_load(f)
 
 
 def model_info(cfg: dict, model: str) -> dict:
-    """معلومات نموذج من config.yaml (السعر، المعاملات النشطة، السياق...)."""
+    """A model's entry in the config (price, active parameters, context window...)."""
     if model not in cfg["models"]:
         raise KeyError(f"unknown model: {model}")
     return cfg["models"][model]
 
 
 def max_output_tokens(cfg: dict, model: str, effort: str | None = None) -> int:
-    """حد طول الجواب: قيمة مستوى التفكير لهذا النموذج إن وُجدت (مثل high في 120b)،
-    ثم قيمة النموذج، وإلا القيمة العامة."""
+    """Output cap: the model's per-effort value if set (e.g. high on 120b), then the model's
+    own value, then the global default."""
     info = model_info(cfg, model)
     by_effort = info.get("max_output_tokens_by_effort") or {}
     if effort in by_effort:
@@ -33,24 +32,18 @@ def max_output_tokens(cfg: dict, model: str, effort: str | None = None) -> int:
     return info.get("max_output_tokens", cfg["generation"]["max_output_tokens"])
 
 
-def effort_options(cfg: dict, model: str) -> list[str | None]:
-    """مستويات التفكير المسموحة لهذا النموذج. None = النموذج لا يدعم التحكم بالتفكير."""
-    if model_info(cfg, model).get("supports_reasoning_effort"):
-        return list(cfg["reasoning_efforts"])
-    return [None]
-
-
 def fits_context(cfg: dict, model: str, est_prompt_tokens: int, effort: str | None = None) -> bool:
-    """هل تتسع المهمة لسياق النموذج؟
-    التقدير × معامل أمان + حد الجواب <= نافذة السياق."""
+    """Whether a task fits the model's context window:
+    estimated prompt tokens × safety factor + output cap <= context window."""
     window = model_info(cfg, model)["context_window"]
     factor = cfg["context_check"]["safety_factor"]
     return est_prompt_tokens * factor + max_output_tokens(cfg, model, effort) <= window
 
 
 def accuracy_floor(cfg: dict, profile: dict, task_type: str) -> tuple[float, str]:
-    """حد الدقة لهذا النوع: دقة baseline A في المعايرة ناقص سؤال واحد (3.3 نقطة عند n=30).
-    إذا لم تُقس baseline A لهذا النوع، نستخدم الحد الثابت في config. يرجع (الحد، شرح قصير)."""
+    """Accuracy floor for a task type: baseline A's calibration accuracy minus one question
+    (3.3 points at n = 30). Falls back to the fixed floor in the config when baseline A has
+    no data for the type. Returns (floor, short explanation)."""
     floors = cfg["floors"]
     base = profile.get(task_type, {}).get(floors.get("baseline_config", ""))
     if not base:

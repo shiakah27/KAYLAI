@@ -1,12 +1,11 @@
-# -*- coding: utf-8 -*-
-"""بناء الرسائل التي نرسلها للنموذج: تعليمات المهمة + لغة التفكير + شكل الجواب الصارم.
+"""Build the messages sent to the model: task instructions, thinking language and the strict reply format.
 
-شكل الجواب واحد لكل النماذج:
-    THINKING: ...   (فقط للنماذج التي ليس لها قناة تفكير منفصلة، مثل allam)
-    ANSWER: <جملة قصيرة بالعربية للمستخدم>
-    FINAL: <الجواب الذي نصححه: رقم، أو حرف، أو اسم نية>
+The reply format is the same for every model:
+    THINKING: ...   (only for models without a separate reasoning channel, such as allam)
+    ANSWER: <one short Arabic sentence for the user>
+    FINAL: <the graded answer: a number, an option letter or an intent label>
 
-gpt-oss يفكر في قناة منفصلة (حقل reasoning)، فلا نطلب منه THINKING في النص."""
+gpt-oss reasons in a separate channel (the reasoning field), so it is not asked for THINKING."""
 
 LETTERS = "ABCDE"
 
@@ -24,8 +23,8 @@ TASK_INSTRUCTIONS = {
 }
 
 
-# مثال قصير على الشكل، للنماذج بدون قناة تفكير (allam) فقط، لأنها لا تلتزم بالشكل بدونه.
-# المثال عام (ليس من بياناتنا)، وسطر THINKING فيه بلغة التفكير المطلوبة.
+# A short format example, only for models without a reasoning channel (allam), which break the
+# format without it. The examples are generic (not from our data); THINKING uses the requested language.
 FORMAT_EXAMPLES = {
     "math": {
         "en": "THINKING: 3 bags with 4 apples each is 3 * 4 = 12.",
@@ -51,13 +50,13 @@ def format_example(task_type: str, think_lang: str) -> str:
 
 
 def has_reasoning_channel(info: dict) -> bool:
-    """النماذج التي تدعم مستوى التفكير (gpt-oss) تفكر في قناة منفصلة."""
+    """Models with reasoning-effort control (gpt-oss) reason in a separate channel."""
     return bool(info.get("supports_reasoning_effort"))
 
 
 def system_prompt(task_type: str, think_lang: str, reasoning_channel: bool,
                   with_example: bool = False) -> str:
-    """تعليمات النظام: المهمة، ولغة التفكير، وشكل الجواب الصارم (ومثال اختياري)."""
+    """System prompt: the task, the thinking language, the strict format and an optional example."""
     lang = THINK_LANG_NAMES[think_lang]
     if reasoning_channel:
         thinking = f"Do all of your reasoning in {lang}."
@@ -74,7 +73,7 @@ def system_prompt(task_type: str, think_lang: str, reasoning_channel: bool,
 
 
 def user_prompt(task: dict) -> str:
-    """نص السؤال، مع الخيارات بحروف A, B, C... أو قائمة النوايا."""
+    """The question, with options lettered A, B, C... or the list of intent labels."""
     if task["type"] == "knowledge":
         options = "\n".join(f"{LETTERS[i]}. {c}" for i, c in enumerate(task["choices"]))
         return f"{task['question']}\n\n{options}"
@@ -84,7 +83,7 @@ def user_prompt(task: dict) -> str:
 
 
 def build_messages(task: dict, think_lang: str, info: dict, with_example: bool = False) -> list[dict]:
-    """الرسائل الكاملة لاستدعاء واحد."""
+    """The full messages for one call."""
     system = system_prompt(task["type"], think_lang, has_reasoning_channel(info), with_example)
     return [
         {"role": "system", "content": system},

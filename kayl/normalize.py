@@ -1,15 +1,14 @@
-# -*- coding: utf-8 -*-
-"""توحيد الأرقام: نستخدمه في تجهيز البيانات وفي تصحيح أجوبة النماذج، حتى يكون المعيار واحدًا."""
+"""Number normalization, shared by data preparation and grading so both use the same rule."""
 
 import re
 
-# تحويل الأرقام العربية-الهندية (٠١٢...) والفارسية (۰۱۲...) إلى أرقام لاتينية (012...)
+# Arabic-Indic (٠١٢...) and Persian (۰۱۲...) digits to ASCII digits.
 ARABIC_DIGITS = str.maketrans("٠١٢٣٤٥٦٧٨٩۰۱۲۳۴۵۶۷۸۹", "01234567890123456789")
 
 
 def normalize_number(text: str | None) -> str | None:
-    """يحول نصًا إلى رقم موحد: يزيل الفواصل، ويحول الأرقام العربية، ويحذف .0 الزائدة.
-    يرجع أول رقم في النص، أو None إذا لم يوجد رقم."""
+    """The first number in the text, with separators removed, digits converted to ASCII and
+    a trailing .0 dropped. None when the text has no number."""
     if text is None:
         return None
     t = text.translate(ARABIC_DIGITS).replace(",", "").replace("٬", "").replace("٫", ".").strip()

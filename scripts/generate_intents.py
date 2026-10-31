@@ -1,0 +1,182 @@
+"""Generate the synthetic intent data (calls Groq; needs GROQ_API_KEY).
+
+Asks a language model for short messages people send to a government-services chatbot, for
+each intent and each dialect (simple MSA / Saudi), and writes data/synthetic/intents.csv with
+the columns text, intent, dialect, human_reviewed. CSV so it can be reviewed and edited by hand.
+
+Why qwen/qwen3.8-27b: it is not one of KAYL's candidate models, so no candidate wrote the data
+it is tested on. (llama-3.3-70b-versatile was planned but is not available on our Groq account.)
+
+This is separate from prepare_data.py so that the data build never calls a model.
+The output is committed, so there is no need to run this.
+
+Warning: rerunning replaces intents.csv. The human review lives in intents_review.csv.
+
+Run from the repository root:
+    python -m scripts.generate_intents
+"""
+
+import csv
+import hashlib
+import json
+import time
+from datetime import date
+from pathlib import Path
+
+from dotenv import load_dotenv
+
+MODEL = "groq/qwen/qwen3.8-27b"
+# max_tokens stays under Groq's free-tier limit for this model (1,000 output tokens per minute).
+# reasoning_effort="none" turns off qwen3's thinking mode, which short messages do not need.
+PARAMS = {"temperature": 0, "max_tokens": 800, "reasoning_effort": "none"}
+RATE_LIMIT_WAIT_S = 60
+OUT = Path("data/synthetic")
+CACHE = Path("cache/generation")
+MIN_WORDS, MAX_WORDS = 4, 15
+
+# 8 clearly distinct intents + other. Descriptions are precise so each message matches its label
+# exactly (e.g. renewing an existing passport only, not a first passport or a lost-passport replacement).
+INTENTS = {
+    "renew_national_id": "تجديد بطاقة هوية وطنية موجودة انتهت أو قربت تنتهي (فقط تجديد، ليس إصدار أول مرة ولا بدل فاقد)",
+    "renew_passport": "تجديد جواز سفر موجود انتهى أو قرب ينتهي (فقط تجديد، ليس إصدار أول جواز ولا بدل فاقد)",
+    "traffic_violation_inquiry": "الاستعلام عن المخالفات المرورية أو سدادها",
+    "vehicle_ownership_transfer": "نقل ملكية سيارة من شخص لآخر (بيع أو شراء سيارة مستعملة)",
+    "book_medical_appointment": "حجز موعد في مركز صحي أو مستشفى حكومي",
+    "report_utility_outage": "الإبلاغ عن انقطاع الكهرباء أو الماء في البيت",
+    "social_support_inquiry": "الاستفسار عن الضمان الاجتماعي أو حساب المواطن (الأهلية، موعد الصرف، حالة الطلب)",
+    "file_complaint": "تقديم شكوى على جهة حكومية أو موظف بسبب سوء خدمة أو تأخير",
+    "other": "رسائل لا علاقة لها بأي خدمة حكومية: سلام وتحية، الطقس، كرة القدم، وصفات أكل، نكت، أسئلة عامة عشوائية",
+}
+
+# Manual relabels after generation (message -> correct label). These two messages name no
+# service, so they fit none of the eight intents.
+RELABELS = {
+    "ابغا اعرف وين ملفي الحين": "other",    # was file_complaint
+    "ابغى اعرف حالة طلبي الحين": "other",   # was social_support_inquiry
+}
+
+# Messages per (intent, dialect): 8 intents × 2 dialects × 4 = 64, plus other × 2 × 8 = 16. Total 80.
+N_PER_CELL = {label: (8 if label == "other" else 4) for label in INTENTS}
+N_SPARE = 2
+
+DIALECTS = {
+    # The first version of this description produced colloquial messages, hence the examples and banned words.
+    "msa": ("فصحى بسيطة وصحيحة، كما يكتبها شخص متعلم في رسالة سريعة. كل الكلمات فصيحة، ولا كلمة عامية واحدة. "
+            "ممنوع استخدام: ابي، ابغى، وش، ايش، وين، ليش، الحين، اسوي، مره، عشان، ما في، مين، شلون. "
+            "وليست رسمية ولا بلغة المعاملات الحكومية. "
+            "أمثلة على الأسلوب المطلوب: «كيف أدفع المخالفة؟» «أريد معرفة موعد صرف الدعم» "
+            "«لماذا لا يعمل الموقع؟» «انقطع الماء عن منزلنا منذ الصباح». "
+            "وليس: «أرجو التكرم بإفادتي عن الإجراءات»"),
+    "saudi": ("لهجة سعودية حقيقية يومية كما يكتبها الناس في الواتساب. "
+              "استخدم كلمات مثل: ابي، ابغى، ابغا، وش، كيف اسوي، ودي، ليش، الحين، وين، مره، يعطيك العافية"),
+}
+
+PROMPT_TEMPLATE = """اكتب {n} رسائل مختلفة يكتبها أشخاص حقيقيون في السعودية لروبوت محادثة (chatbot) تابع لبوابة خدمات حكومية.
+موضوع كل الرسائل: {intent_desc}
+اللغة: {dialect_desc}
+
+القواعد:
+- كل رسالة قصيرة: من 4 إلى 15 كلمة.
+- عفوية كأن الشخص يكتب بسرعة من جواله: أحيانًا بدون علامات ترقيم، وأحيانًا فيها خطأ إملائي بسيط.
+- كل رسالة تبدأ بشكل مختلف، ولا تكرر نفس الكلمات.
+- كل رسالة يجب أن تطابق الموضوع بالضبط، ولا تخلطه بخدمة أخرى.
+- لا تكتب أي شرح أو ترقيم أو أسماء.
+
+أعد JSON فقط بهذا الشكل: {{"messages": ["...", "..."]}}"""
+
+
+def build_prompt(intent: str, dialect: str) -> str:
+    """The request for one intent and dialect. It asks for N_SPARE extra messages, because some
+    may be dropped (duplicates, or outside 4-15 words)."""
+    return PROMPT_TEMPLATE.format(
+        n=N_PER_CELL[intent] + N_SPARE, intent_desc=INTENTS[intent], dialect_desc=DIALECTS[dialect]
+    )
+
+
+def call_model(prompt: str) -> tuple[str, dict]:
+    """Call the model through a disk cache (the same request returns the saved reply)."""
+    import litellm
+
+    key = hashlib.sha256(json.dumps([MODEL, PARAMS, prompt], ensure_ascii=False).encode()).hexdigest()
+    path = CACHE / f"{key}.json"
+    if path.exists():
+        cached = json.loads(path.read_text(encoding="utf-8"))
+        return cached["content"], cached["usage"]
+
+    for attempt in range(5):
+        try:
+            resp = litellm.completion(
+                model=MODEL,
+                messages=[{"role": "user", "content": prompt}],
+                response_format={"type": "json_object"},
+                **PARAMS,
+            )
+            break
+        except litellm.RateLimitError:
+            print(f"  per-minute rate limit, waiting {RATE_LIMIT_WAIT_S}s (attempt {attempt + 1})")
+            time.sleep(RATE_LIMIT_WAIT_S)
+    else:
+        raise RuntimeError("rate limit: all attempts failed")
+    content, usage = resp.choices[0].message.content, resp.usage.model_dump()
+    CACHE.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps({"content": content, "usage": usage}, ensure_ascii=False),
+                    encoding="utf-8")
+    return content, usage
+
+
+def main():
+    load_dotenv()
+    OUT.mkdir(parents=True, exist_ok=True)
+    rows, seen, problems = [], set(), []
+    tokens_in = tokens_out = 0
+
+    for intent in INTENTS:
+        for dialect in DIALECTS:
+            content, usage = call_model(build_prompt(intent, dialect))
+            tokens_in += usage["prompt_tokens"]
+            tokens_out += usage["completion_tokens"]
+            messages = [m.strip() for m in json.loads(content)["messages"]]
+            kept = 0
+            for text in messages:
+                if kept == N_PER_CELL[intent]:
+                    break  # spares were requested; keep only the first N valid ones
+                n_words = len(text.split())
+                if text in seen:
+                    problems.append(f"skipped duplicate: {text}")
+                    continue
+                if not MIN_WORDS <= n_words <= MAX_WORDS:
+                    problems.append(f"skipped {n_words} words ({intent}/{dialect}): {text}")
+                    continue
+                seen.add(text)
+                rows.append({"text": text, "intent": intent, "dialect": dialect,
+                             "human_reviewed": "false"})
+                kept += 1
+            print(f"{intent:28s} {dialect:6s} -> kept {kept}/{N_PER_CELL[intent]} (got {len(messages)})")
+            if kept < N_PER_CELL[intent]:
+                problems.append(f"SHORT: {intent}/{dialect} has only {kept}")
+
+    for r in rows:
+        if r["text"] in RELABELS:
+            print(f"relabel: {r['text']}  {r['intent']} -> {RELABELS[r['text']]}")
+            r["intent"] = RELABELS[r["text"]]
+
+    # utf-8-sig so Excel opens the Arabic text correctly
+    with (OUT / "intents.csv").open("w", encoding="utf-8-sig", newline="") as f:
+        writer = csv.DictWriter(f, fieldnames=["text", "intent", "dialect", "human_reviewed"])
+        writer.writeheader()
+        writer.writerows(rows)
+
+    meta = {"model": MODEL, "params": PARAMS, "n_per_cell": N_PER_CELL, "n_spare": N_SPARE,
+            "generated_on": date.today().isoformat(), "prompt_template": PROMPT_TEMPLATE,
+            "intents": INTENTS, "dialects": DIALECTS, "n_rows": len(rows),
+            "tokens": {"input": tokens_in, "output": tokens_out}}
+    (OUT / "intents_generation.json").write_text(
+        json.dumps(meta, ensure_ascii=False, indent=2), encoding="utf-8")
+
+    print(f"\nsaved {len(rows)} messages to {OUT / 'intents.csv'} (tokens in={tokens_in} out={tokens_out})")
+    for p in problems:
+        print("PROBLEM:", p)
+
+
+if __name__ == "__main__":
+    main()

@@ -83,9 +83,9 @@ Only 1 of KAYL's 3 wrong intent answers was on a flagged row (`intent-62`, which
    - With n = 30, one question is 3.3 points. A configuration that sits exactly on the floor can fall below it on new questions just from normal variation.
    - A bigger calibration set, or a safety margin above the floor, would make the choice more robust. Both are possible future work, and **neither was applied here**.
 4. **Observation on the test set, not a choice.** The "minus model key" ablation (`120b-low` for every type) met all three floors on test (80/90) and used about 31% less compute than A (3.47 TFLOPs per success). We report this as an observation only. It came from looking at test results, so KAYL was **not** changed to use it.
-4. **Verify/escalate added nothing on this test.** All 90 KAYL answers passed verification, so there were 0 escalations, and **11 of the verified answers were wrong.** The verifier checks the answer *format* (valid number, letter or label, Arabic ANSWER line, not cut off), not whether the answer is correct. That is why "D minus verify/escalate" is identical to D.
-5. **The effort key matters.** Removing it (medium only) raised accuracy to 83/90 but more than doubled compute (5.52).
-6. **B (ALLaM) is the fastest but not "small" in compute.** It is a 7B dense model, so it costs more compute per token than gpt-oss-20b (3.6B active). Its math accuracy is very low (12/30).
+5. **Verify/escalate added nothing on this test.** All 90 KAYL answers passed verification, so there were 0 escalations, and **11 of the verified answers were wrong.** The verifier checks the answer *format* (valid number, letter or label, Arabic ANSWER line, not cut off), not whether the answer is correct. That is why "D minus verify/escalate" is identical to D.
+6. **The effort key matters.** Removing it (medium only) raised accuracy to 83/90 but more than doubled compute (5.52).
+7. **B (ALLaM) is the fastest but not "small" in compute.** It is a 7B dense model, so it costs more compute per token than gpt-oss-20b (3.6B active). Its math accuracy is very low (12/30).
 
 ## Calibration sweep (n = 30 per type, one run, Groq direct)
 
@@ -133,16 +133,24 @@ We stopped this configuration. As a result, **the thinking-language key had no e
 - **The verifier checks the answer format, not its correctness**, so it cannot catch a well-formed wrong answer. This is why escalation never triggered on the test set.
 - **Compute is an estimate**, based on active parameters and API token counts. It is not a hardware measurement, and energy is not reported.
 - **ALLaM's price is unknown**, so dollar cost is n/a for any experiment that used it.
-- **The intent data is synthetic.** An AI model (qwen3.8-27b) generated it, and the author reviewed all 80 rows by hand: 72 ok, 5 not natural, 3 ambiguous. Five flagged rows are in the test set. Intent scores are reported both with and without them (see below). There was only one reviewer.
+- **The intent data is synthetic.** An AI model (qwen3.8-27b) generated it, and the author reviewed all 80 rows by hand: 72 ok, 5 not natural, 3 ambiguous. Five flagged rows are in the test set. Intent scores are reported both with and without them (see above). There was only one reviewer.
 - **Data quality.** Some ArabicMMLU items contain corrupted text, and the models may have seen GSM8K and ArabicMMLU during training.
 - **Different routes.** The final test went through OpenRouter (pinned to Groq), while calibration went to Groq directly, so latencies from the two phases should not be compared.
 
 ## Reproduce
 
+Every model response is committed in `cache/llm/`, so all results replay **with no API key and no API calls**.
+`--from-cache` stops at the first response that is not recorded, and no script writes to `results/` if any call failed.
+Run from the repository root:
+
 ```bash
-python prepare_data.py                 # data splits (no model calls)
-python run_sweep.py                    # calibration sweep (from cache; set routing.gpt_oss: groq in config.yaml,
-                                       # because the calibration calls were cached on the direct Groq route)
-python run_final.py --final-eval       # final test (from cache; routing.gpt_oss: openrouter)
-pytest                                 # tests
+python -m scripts.prepare_data                                  # data splits (no model calls)
+python -m scripts.run_sweep --from-cache --route groq           # calibration sweep (it used Groq directly)
+python -m scripts.run_final --final-eval --from-cache           # final test (OpenRouter pinned to Groq, as in config.yaml)
+python -m scripts.run_fallback_drill --from-cache --route groq  # real-condition drill (Groq directly)
+python -m scripts.run_simulated_outage --from-cache             # SIMULATED outage (as in config.yaml)
+pytest                                                          # tests, including a replay of recorded test answers
 ```
+
+A replay gives the same answers, tokens, compute and grades. Only `run_id`, the `cached` flags and the "(from cache)" note in decision reasons differ.
+`prepare_data` and the two drills download the public datasets from Hugging Face on first use.

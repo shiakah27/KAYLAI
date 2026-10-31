@@ -1,5 +1,4 @@
-# -*- coding: utf-8 -*-
-"""اختبارات قراءة سطر FINAL الصارم، وكشف لغة التفكير."""
+"""Strict FINAL parsing and thinking-language detection."""
 
 from kayl.language import arabic_ratio, detect_lang, strip_copied
 from kayl.parsing import parse_answer, parse_final, parse_thinking
@@ -23,7 +22,7 @@ def test_final_takes_last_line():
 
 
 def test_final_is_strict():
-    # لا نقبل أشكالًا أخرى: هذه إشارة لعدم الالتزام بالشكل
+    # other spellings are rejected on purpose: they signal a broken format
     assert parse_final("**FINAL:** 75") is None
     assert parse_final("Final answer: 75") is None
     assert parse_final("final: 75") is None
@@ -43,12 +42,12 @@ def test_detect_lang():
     assert detect_lang("We need the cost: 60 * 1.25 = 75") == "en"
     assert detect_lang("نحتاج التكلفة: 60 × 1.25 = 75") == "ar"
     assert detect_lang("التكلفة cost هي") == "mixed"
-    assert detect_lang("60 * 1.25 = 75") == "none"   # أرقام فقط لا تدل على لغة
+    assert detect_lang("60 * 1.25 = 75") == "none"   # digits alone say nothing about the language
     assert detect_lang(None) == "none"
 
 
 def test_strip_copied_quoted_question():
-    # حالة حقيقية من gpt-oss: تفكير إنجليزي يقتبس السؤال العربي
+    # a real gpt-oss case: English reasoning that quotes the Arabic question
     question = "كم عدد التذاكر التي سيحصل عليها كل خريج لتوزيعها على أصدقائهم"
     reasoning = ('Remaining seats = 4750. It says "كم عدد التذاكر التي سيحصل عليها كل خريج" '
                  "so each graduate gets 4750/950 = 5 tickets.")
@@ -63,7 +62,7 @@ def test_strip_copied_unquoted_ngram():
 
 
 def test_strip_copied_keeps_real_arabic_reasoning():
-    # تفكير عربي حقيقي يبقى عربيًا حتى لو استخدم كلمات من السؤال
+    # genuine Arabic reasoning stays Arabic even when it reuses words from the question
     question = "يمتلك جو خمسين دولارا لشراء زي جديد لرحلته"
     reasoning = "جو معه خمسون دولارا، والقميص والسروال بعد الخصم ٤٢، فيبقى معه ٨."
     assert detect_lang(strip_copied(reasoning, question)) == "ar"

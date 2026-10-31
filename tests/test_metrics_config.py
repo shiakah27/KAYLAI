@@ -1,9 +1,8 @@
-# -*- coding: utf-8 -*-
-"""اختبارات حساب الحوسبة والتكلفة، وقواعد النماذج من config.yaml (السياق ومستوى التفكير)."""
+"""Compute and cost math, and the model rules in config.yaml (context window and effort)."""
 
 import pytest
 
-from kayl.config import effort_options, fits_context, load_config, max_output_tokens
+from kayl.config import fits_context, load_config, max_output_tokens
 from kayl.metrics import call_compute_flops, call_cost_usd, per_success
 
 CFG = load_config()
@@ -27,19 +26,20 @@ def test_cost_is_none_without_verified_price():
 
 
 def test_per_success_includes_failed_attempts():
-    # 3 استدعاءات (واحد فاشل) وجوابان صحيحان: المجموع ÷ 2
+    # 3 calls (one failed) and 2 correct answers: total / 2
     assert per_success([1.0, 2.0, 3.0], 2) == pytest.approx(3.0)
 
 
 def test_per_success_none_cases():
-    assert per_success([1.0, 2.0], 0) is None          # لا جواب صحيح
-    assert per_success([1.0, None], 1) is None         # سعر غير مؤكد في أحد الاستدعاءات
+    assert per_success([1.0, 2.0], 0) is None          # nothing correct
+    assert per_success([1.0, None], 1) is None         # one call has an unverified price
 
 
 def test_effort_only_for_gpt_oss():
-    assert effort_options(CFG, "allam-2-7b") == [None]
-    assert effort_options(CFG, "openai/gpt-oss-20b") == ["low", "medium", "high"]
-    assert effort_options(CFG, "openai/gpt-oss-120b") == ["low", "medium", "high"]
+    assert ALLAM["supports_reasoning_effort"] is False
+    assert GPT20["supports_reasoning_effort"] is True
+    assert CFG["models"]["openai/gpt-oss-120b"]["supports_reasoning_effort"] is True
+    assert CFG["reasoning_efforts"] == ["low", "medium", "high"]
 
 
 def test_max_output_override():

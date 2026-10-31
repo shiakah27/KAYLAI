@@ -1,6 +1,5 @@
-# -*- coding: utf-8 -*-
-"""سجل SQLite لكل استدعاء: الوقت، المهمة، الإعدادات، النموذج، التوكنز من الـ API،
-زمن الاستجابة، التكلفة، الحوسبة، الصحة، والتصعيد."""
+"""SQLite log of every call: time, task, configuration, model, API token counts, latency,
+cost, compute, correctness and escalation."""
 
 import sqlite3
 from datetime import datetime, timezone
@@ -20,12 +19,12 @@ COLUMNS = {
 
 
 def connect(path: str | Path) -> sqlite3.Connection:
-    """يفتح قاعدة البيانات وينشئ جدول calls إذا لم يكن موجودًا."""
+    """Open the database and create the calls table if needed."""
     Path(path).parent.mkdir(parents=True, exist_ok=True)
     conn = sqlite3.connect(path)
     cols = ", ".join(f"{k} {v}" for k, v in COLUMNS.items())
     conn.execute(f"CREATE TABLE IF NOT EXISTS calls (id INTEGER PRIMARY KEY AUTOINCREMENT, {cols})")
-    # قاعدة قديمة بدون أعمدة جديدة (مثل provider): نضيفها
+    # A database created before a column was added (e.g. provider) gets the missing columns.
     existing = {row[1] for row in conn.execute("PRAGMA table_info(calls)")}
     for k, v in COLUMNS.items():
         if k not in existing:
@@ -35,7 +34,7 @@ def connect(path: str | Path) -> sqlite3.Connection:
 
 def log_call(conn: sqlite3.Connection, result, *, run_id: str, config_name: str,
              correct: bool | None, escalated: bool = False) -> None:
-    """يسجل استدعاء واحدًا (result من نوع CallResult)."""
+    """Log one call (a CallResult)."""
     row = {
         "ts": datetime.now(timezone.utc).isoformat(), "run_id": run_id, "config_name": config_name,
         "task_id": result.task_id, "task_type": result.task_type,

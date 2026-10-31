@@ -1,20 +1,20 @@
-# -*- coding: utf-8 -*-
-"""
-كَيْل — واجهة العرض (Streamlit).
+"""KAYL demo UI (Streamlit).
 
-ماذا تعرض:
-  - مسار القرار خطوة بخطوة: فهم المهمة -> اختيار النموذج والتفكير -> الجواب -> التحقق -> التصعيد عند الحاجة.
-  - بطاقة السبب (جملة واحدة من أرقام المعايرة)، وبطاقات الأرقام، وأشرطة الحوسبة مقابل "كل شيء للأكبر".
-  - تبويب النتائج: جدول الاختبار النهائي من results/final_test_summary.json.
-  - وضع الإعادة (Replay): يعرض تشغيلات حقيقية مسجلة من الكاش، بدون أي استدعاء API.
+- The decision pipeline step by step: understand the task -> choose model and effort -> answer
+  -> verify -> escalate only if needed.
+- A reason card (one sentence built from calibration numbers), metric cards, and compute bars
+  against "all to largest".
+- A Results tab with the final test table from results/final_test_summary.json.
+- Replay mode plays real recorded runs from the cache, with no API calls.
 
-التشغيل:
+Run:
     streamlit run app.py
 """
 
 import copy
 import html
 import json
+import math
 import re
 import time
 from contextlib import contextmanager, nullcontext
@@ -26,6 +26,7 @@ import streamlit as st
 from kayl.agent import infer_type, run_agent
 from kayl.client import call_model
 from kayl.config import accuracy_floor, load_config
+from kayl.data import drill_tasks as load_drill_tasks
 from kayl.grading import normalize_label
 from kayl.profile import load_profile
 
@@ -35,7 +36,7 @@ st.set_page_config(page_title="KAYL — Intelligence Without Waste", page_icon="
 LARGEST = ("openai/gpt-oss-120b", "medium")  # "All to largest" = baseline A
 PRETTY_MODEL = {"allam-2-7b": "ALLaM-2-7B", "openai/gpt-oss-20b": "gpt-oss-20b", "openai/gpt-oss-120b": "gpt-oss-120b"}
 TYPE_NAMES = {"math": "math", "knowledge": "multiple-choice knowledge", "intent": "service-request intent"}
-EXAMPLES = {  # من بيانات المعايرة (وليس الاختبار)
+EXAMPLES = {  # from calibration data, never test
     "math": ("Math", "gsm8k-ar-1107"),
     "knowledge": ("Knowledge", "arabicmmlu-11638"),
     "intent": ("Saudi-dialect request", "intent-6"),
@@ -159,8 +160,8 @@ INTENT_AR = {
 
 
 def ar_num(text) -> str:
-    """للعرض فقط (صندوق السؤال وصندوق الإجابة): أرقام عربية مشرقية مع ٫ و٬ و٪.
-    لا نلمس الأرقام الملتصقة بحروف لاتينية (مثل gpt-oss-20b). البيانات وما يُرسل للنموذج لا يتغيران."""
+    """Display only: Arabic-Indic digits with ٫ ٬ and ٪. Digits attached to Latin letters (such as
+    gpt-oss-20b) are left alone. The data and what is sent to the model never change."""
     def conv(m):
         t = re.sub(r"(?<=\d)\.(?=\d)", "٫", m.group(0))
         return re.sub(r"(?<=\d),(?=\d{3})", "٬", t).translate(AR_DIGITS)
@@ -186,8 +187,7 @@ def calibration_tasks() -> dict:
 
 @st.cache_data(show_spinner=False)
 def drill_tasks() -> dict:
-    from run_fallback_drill import drill_tasks as load
-    return {t["id"]: t for t in load()}
+    return {t["id"]: t for t in load_drill_tasks()}
 
 
 @st.cache_data
@@ -209,7 +209,7 @@ def case_config(route: str | None = None, unavailable: list[str] | None = None) 
 
 
 class ReplayMiss(RuntimeError):
-    """في وضع الإعادة لا نستدعي أي نموذج: كل ما ليس في الكاش يُعتبر غير مسجل."""
+    """Replay mode never calls a model: anything missing from the cache counts as not recorded."""
 
 
 @contextmanager
@@ -232,7 +232,7 @@ OPTION_RE = re.compile(r"^\s*([A-Ea-e]|[أبجده])[\).:\-]\s*(.+)$")
 
 
 def build_task(text: str, kind: str) -> tuple[dict, str]:
-    """يبني مهمة من النص الحر. يرجع (المهمة، كيف عرفنا نوعها)."""
+    """Build a task from free text. Returns (task, how its type was found)."""
     lines = [l for l in text.strip().splitlines() if l.strip()]
     options = [OPTION_RE.match(l) for l in lines]
     if kind in ("Auto", "Knowledge") and sum(bool(m) for m in options) >= 2:
@@ -247,19 +247,20 @@ def build_task(text: str, kind: str) -> tuple[dict, str]:
 # ---------------------------------------------------------------- run
 
 def run_case(task: dict, cfg: dict, replay: bool) -> dict:
-    """يشغّل كَيْل، ثم "كل شيء للأكبر" على نفس المهمة للمقارنة."""
+    """Run KAYL, then "all to largest" on the same task for comparison."""
     with (no_api_calls() if replay else nullcontext()):
         out = run_agent(task, cfg, profile())
-        big_cfg = case_config(cfg["routing"]["gpt_oss"])  # المقارنة بدون انقطاع مُحاكى
+        big_cfg = case_config(cfg["routing"]["gpt_oss"])  # the comparison runs without the simulated outage
         big = call_model(big_cfg, {**task, "type": out["task_type"]}, *LARGEST, "en")
     out.pop("_results", None)
     stats = profile().get(out["task_type"], {}).get("120b-medium")
     if big.error or big.skipped:
         avg = stats["compute_per_success"] * stats["correct"] / stats["n"] if stats else None
-        largest = {"compute": avg, "source": "calibration average for this task type (not recorded for this task)"}
+        largest = {"compute": avg, "same_task": False,
+                   "source": "calibration average for this task type (not recorded for this task)"}
     else:
-        largest = {"compute": big.compute_flops, "source": "same task, gpt-oss-120b · medium"
-                   + (" (recorded)" if big.cached else " (live call)")}
+        largest = {"compute": big.compute_flops, "same_task": True,
+                   "source": "same task, gpt-oss-120b · medium" + (" (recorded)" if big.cached else " (live call)")}
     missing = [a for a in out["attempts"] if a["verify_reason"] and "not recorded" in a["verify_reason"]]
     return {"out": out, "largest": largest, "missing": bool(missing)}
 
@@ -274,19 +275,19 @@ def config_label(cfg: dict, name: str | None, model: str | None = None, effort: 
 
 
 def display_final(task_type: str, final: str | None) -> str:
-    """قيمة FINAL للعرض فقط: جواب الرياضيات بأرقام عربية مشرقية؛ الحرف واسم النية كما هما."""
+    """FINAL for display: math answers in Arabic-Indic digits; letters and labels unchanged."""
     if not final:
         return "—"
     return ar_num(final) if task_type == "math" else final
 
 
 def display_reason(task_type: str, reason: str) -> str:
-    """في سجل القرارات: الجواب المقتبس (FINAL '...') بأرقام عربية للعرض فقط؛ باقي النص الإنجليزي كما هو."""
+    """Decision log: the quoted FINAL '...' in Arabic-Indic digits for display; the rest unchanged."""
     return re.sub(r"FINAL '([^']*)'", lambda m: f"FINAL '{display_final(task_type, m.group(1))}'", reason)
 
 
 def step_result(d: dict, out: dict, cfg: dict, attempt_no: int) -> tuple[str, str]:
-    """(النص القصير تحت الخطوة، الحالة)."""
+    """(short text under the step, state)."""
     step, why = d["step"], d["reason"]
     if step == "estimate":
         return f"{TYPE_NAMES[out['task_type']].capitalize()} task · calibration profile loaded", "done"
@@ -394,8 +395,8 @@ def results_view(r: dict, cfg: dict, animate: bool):
         if big:
             top = max(big, compute)
             saved = 1 - compute / big
-            save_txt = f"{saved:.0%} less compute than all-to-largest" if saved >= 0 else \
-                f"{-saved:.0%} more compute than all-to-largest"
+            versus = "all-to-largest" if largest["same_task"] else "the calibration average of all-to-largest"
+            save_txt = f"{abs(saved):.0%} {'less' if saved >= 0 else 'more'} compute than {versus}"
             st.markdown(f"""<div class="k-card k-bars">
               <div class="row"><div class="lab">All to largest</div><div class="track"><div class="fill big" style="width:{100 * big / top:.1f}%"></div></div><div class="val">{big / 1e12:.2f} TF</div></div>
               <div class="row"><div class="lab">KAYL</div><div class="track"><div class="fill kayl" style="width:{100 * compute / top:.1f}%"></div></div><div class="val">{compute / 1e12:.2f} TF</div></div>
@@ -404,7 +405,7 @@ def results_view(r: dict, cfg: dict, animate: bool):
             </div>""", unsafe_allow_html=True)
     with c2:
         if out["task_type"] == "intent":
-            # طلبات الخدمة: النية المتوقعة فقط (مع اسم عربي)، بدون رد النموذج الحر. الرد المسجل لا يُعدَّل.
+            # Service requests show only the predicted intent and its Arabic name, not the free-text reply.
             code = normalize_label(out["final"]) if out["final"] else None
             st.markdown('<div class="k-label">Predicted intent</div>', unsafe_allow_html=True)
             st.markdown(f'<div class="k-card"><div class="k-answer" dir="rtl" style="unicode-bidi:isolate">'
@@ -434,11 +435,23 @@ def results_tab():
     summ = s["summary"]
     kayl, big = summ["D KAYL"][-1], summ["A 120b-medium (largest)"][-1]
     saved = 1 - kayl["compute_per_success"] / big["compute_per_success"]
+    no_model = summ["D minus model key (120b only)"]
+    no_model_saved = 1 - no_model[-1]["compute_per_success"] / big["compute_per_success"]
+    no_model_floors = all(x["meets_floors"] for x in no_model if x["type"] != "all")
+    cfg, prof = base_config(), profile()
+    met, missed = 0, []
+    for x in summ["D KAYL"][:-1]:
+        if x["meets_floors"]:
+            met += 1
+        else:
+            floor, _ = accuracy_floor(cfg, prof, x["type"])
+            missed.append(f"{x['type']} by {math.ceil(floor * x['n'] - x['correct'] - 1e-9)}")
+    missed_txt = f" (missed {' and '.join(missed)} question(s))" if missed else ""
     st.markdown(f"""<div class="k-teal"><div class="k-label" style="color:#E6FFF6">Held-out test · 90 questions · one run · temperature 0</div>
       <div class="grid" style="margin-top:.6rem">
         <div><div class="big">{saved:.0%}</div>less compute per correct answer than all-to-largest</div>
         <div><div class="big">{kayl['correct']}/{kayl['n']}</div>KAYL correct (all-to-largest: {big['correct']}/{big['n']})</div>
-        <div><div class="big">1 / 3</div>task types where KAYL met its own accuracy floor (missed math and intent by 1–2 questions)</div>
+        <div><div class="big">{met} / {len(summ['D KAYL']) - 1}</div>task types where KAYL met its floors{esc(missed_txt)}</div>
       </div></div>""", unsafe_allow_html=True)
 
     rows = []
@@ -458,7 +471,8 @@ def results_tab():
     st.markdown('<div class="k-label" style="margin-top:.8rem">Notes</div>'
                 '<div style="color:var(--muted);font-size:.85rem;line-height:1.6">'
                 "KAYL's choices were made on calibration data only and were not changed after the test. "
-                "120b-low (the “minus model key” ablation) met all floors with about 31% less compute than all-to-largest; "
+                f"120b-low (the “minus model key” ablation) {'met all floors' if no_model_floors else 'did not meet all floors'} "
+                f"with about {no_model_saved:.0%} less compute than all-to-largest; "
                 "this is an observation on the test set, not a choice. The verifier checks answer format, not correctness. "
                 "E is a simple difficulty proxy (question length), not RouteLLM. Final-test gpt-oss calls went through "
                 "OpenRouter pinned to the Groq provider. Full details: RESULTS.md.</div>", unsafe_allow_html=True)
@@ -467,7 +481,7 @@ def results_tab():
 # ---------------------------------------------------------------- page
 
 def set_example_text(task: dict) -> str:
-    """نص المثال كما يظهر في صندوق الإدخال (مع الخيارات للمعرفة)."""
+    """The example as shown in the input box (with options for knowledge)."""
     text = task["question"]
     if task["type"] == "knowledge":
         text += "\n" + "\n".join(f"{'ABCDE'[i]}) {c}" for i, c in enumerate(task["choices"]))
@@ -478,7 +492,7 @@ KIND_OF = {"math": "Math", "knowledge": "Knowledge", "intent": "Intent"}
 
 
 def set_example(key: str):
-    """زر المثال: يملأ النص، ويجعل قائمة نوع المهمة تطابق نوع المثال."""
+    """Example button: fill the text and set the task-type dropdown to the example's type."""
     _, tid = EXAMPLES[key]
     task = calibration_tasks()[tid]
     st.session_state["prompt"] = set_example_text(task)
@@ -487,7 +501,7 @@ def set_example(key: str):
 
 
 def sync_kind():
-    """عند تعديل النص: قائمة نوع المهمة تطابق النوع الذي يكتشفه كَيْل من النص."""
+    """On edit: set the task-type dropdown to the type KAYL detects from the text."""
     text = st.session_state.get("prompt", "")
     if text.strip():
         task, _ = build_task(text, "Auto")
@@ -510,7 +524,7 @@ def main():
             _, title, source, tid, label, ov = next(r for r in REPLAYS if r[0] == key)
             try:
                 task = (calibration_tasks() if source == "calibration" else drill_tasks())[tid]
-            except Exception as e:  # بيانات التمرين تحتاج نسخة Hugging Face المحلية
+            except Exception as e:  # drill tasks are rebuilt from the Hugging Face dataset
                 st.markdown(f'<div class="k-card">This recording needs the local dataset cache ({esc(e)}).</div>',
                             unsafe_allow_html=True)
                 task = None
@@ -529,10 +543,10 @@ def main():
             b3.button("Saudi-dialect request", on_click=set_example, args=("intent",), type="secondary")
             text = st.text_area("Arabic task", key="prompt", height=120, on_change=sync_kind,
                                 placeholder="اكتب سؤالًا بالعربية… (للاختيار من متعدد: سطر لكل خيار مثل A) …)")
-            if (text or "").strip():  # نسخة للعرض فقط بأرقام عربية مشرقية؛ النموذج يستلم النص كما كُتب
+            if (text or "").strip():  # display copy in Arabic-Indic digits; the model gets the text as typed
                 lines = []
                 for line in text.strip().splitlines():
-                    m = OPTION_RE.match(line)  # حرف الخيار (A) …) معزول حتى لا تنقلب القوس من اليمين لليسار
+                    m = OPTION_RE.match(line)  # isolate the option letter so "A)" is not flipped in right-to-left text
                     lines.append(f'<bdi dir="ltr">{esc(m.group(1))})</bdi> {esc(ar_num(m.group(2)))}' if m
                                  else esc(ar_num(line)))
                 st.markdown(f'<div class="k-card k-ar" dir="rtl" style="margin:.2rem 0 .8rem;unicode-bidi:isolate">'
@@ -546,7 +560,7 @@ def main():
                 if example and set_example_text(example) == text.strip():
                     task = example
                 else:
-                    task, _ = build_task(text, kind)  # الوكيل نفسه يكتب كيف عرف نوع المهمة (estimate)
+                    task, _ = build_task(text, kind)
                 cfg, label = case_config(), "Live run"
 
         if go and task:

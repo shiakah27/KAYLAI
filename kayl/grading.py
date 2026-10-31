@@ -1,12 +1,11 @@
-# -*- coding: utf-8 -*-
-"""المصححات: نقارن قيمة سطر FINAL بالجواب الصحيح، حسب نوع المهمة.
+"""Graders: compare the FINAL value with the gold answer, by task type.
 
-    math       -> الرقم (بعد التوحيد: أرقام عربية، فواصل، .0)
-    knowledge  -> حرف الخيار (نقبل A أو (A) أو A. أو الحرف العربي أ)
-    intent     -> اسم النية بالضبط (نتجاهل حالة الأحرف والمسافات وعلامات التنصيص)
+    math       -> the number (after normalizing Arabic digits, separators and .0)
+    knowledge  -> the option letter (A, (A), A. or the Arabic letter أ are accepted)
+    intent     -> the exact label (case, spaces, hyphens and quotes are ignored)
 
-صارم لكن عادل: نقبل فروق الشكل البسيطة، أما الجواب الغامض فيُحسب خطأ.
-كل نتيجة معها سبب، حتى نفرق بين "جواب خاطئ" و"لم يلتزم بالشكل"."""
+Strict but fair: small format differences are accepted, an ambiguous answer counts as wrong.
+Every grade carries a reason, so a wrong answer can be told apart from a broken format."""
 
 import re
 from dataclasses import dataclass
@@ -16,29 +15,29 @@ from kayl.normalize import ARABIC_DIGITS, normalize_number
 LETTERS = "ABCDE"
 ARABIC_LETTERS = {"أ": "A", "ا": "A", "ب": "B", "ج": "C", "د": "D", "ه": "E", "هـ": "E"}
 
-# الأسباب
-OK = "ok"                # صحيح
-WRONG = "wrong"          # جواب صالح لكنه خاطئ
-NO_FINAL = "no_final"    # لا يوجد سطر FINAL
-AMBIGUOUS = "ambiguous"  # أكثر من جواب محتمل (مثلًا رقمان)
-INVALID = "invalid"      # FINAL موجود لكن ليس رقمًا / حرفًا / نية معروفة
+# Grade reasons
+OK = "ok"
+WRONG = "wrong"          # a valid answer, but not the gold one
+NO_FINAL = "no_final"    # no FINAL line
+AMBIGUOUS = "ambiguous"  # more than one candidate answer (e.g. two numbers)
+INVALID = "invalid"      # FINAL is not a number / option letter / known label
 
 
 @dataclass(frozen=True)
 class Grade:
     correct: bool
     reason: str
-    parsed: str | None = None  # الجواب بعد القراءة (رقم، حرف، أو نية)
+    parsed: str | None = None  # the parsed number, letter or label
 
 
 def _numbers(text: str) -> list[str]:
-    """كل الأرقام في النص بعد التوحيد."""
+    """Every number in the text, normalized."""
     t = text.translate(ARABIC_DIGITS).replace(",", "").replace("٬", "").replace("٫", ".")
     return [normalize_number(n) for n in re.findall(r"-?\d+(?:\.\d+)?", t)]
 
 
 def grade_math(final: str, answer: str) -> Grade:
-    """يجب أن يحتوي FINAL على رقم واحد فقط."""
+    """FINAL must contain exactly one number."""
     nums = set(_numbers(final))
     if not nums:
         return Grade(False, INVALID)
@@ -49,7 +48,7 @@ def grade_math(final: str, answer: str) -> Grade:
 
 
 def parse_letter(final: str, n_choices: int) -> str | None:
-    """يقرأ حرف الخيار: "B" أو "(B)" أو "B." أو "B) نص الخيار" أو "ب"."""
+    """Read the option letter from "B", "(B)", "B.", "B) option text" or "ب"."""
     t = final.strip().strip("*`'\" ")
     m = re.match(r"^[(\[]?([A-Ea-e])(?:[)\].:]|\s|$)", t + " ")
     if m:
@@ -70,7 +69,7 @@ def grade_knowledge(final: str, answer: str, n_choices: int) -> Grade:
 
 
 def normalize_label(text: str) -> str:
-    """"Renew Passport" أو "`renew-passport`" -> "renew_passport"."""
+    """"Renew Passport" or "`renew-passport`" -> "renew_passport"."""
     t = text.strip().strip("*`'\".").strip().lower()
     return re.sub(r"[\s\-]+", "_", t)
 
@@ -83,7 +82,7 @@ def grade_intent(final: str, answer: str, labels: list[str]) -> Grade:
 
 
 def grade(task: dict, final: str | None) -> Grade:
-    """يصحح جوابًا واحدًا حسب نوع المهمة."""
+    """Grade one answer for its task type."""
     if final is None or not final.strip():
         return Grade(False, NO_FINAL)
     if task["type"] == "math":
@@ -96,8 +95,8 @@ def grade(task: dict, final: str | None) -> Grade:
 
 
 def validate(task: dict, final: str | None) -> tuple[bool, str]:
-    """هل الجواب صالح لنوع المهمة؟ بدون معرفة الجواب الصحيح (يستخدمه الوكيل أثناء الحل).
-    يرجع (صالح؟، السبب)."""
+    """Whether the answer is valid for the task type, without knowing the gold answer.
+    Used by the agent's verify step. Returns (valid, reason)."""
     if final is None or not final.strip():
         return False, NO_FINAL
     if task["type"] == "math":
