@@ -71,7 +71,7 @@ Only 1 of KAYL's 3 wrong intent answers was on a flagged row (`intent-62`, which
 
 **KAYL's choices were made on calibration data only, and they were not changed after we saw these test results.** Changing them now would be test leakage.
 
-1. **The trade-off.** KAYL used **about 49% less compute than A** (2.56 vs 5.02 TFLOPs per success), and about 27% of A's dollar cost per success. It got **4 fewer correct answers** (79/90 vs 83/90).
+1. **The trade-off.** KAYL reduced estimated compute per correct answer by 49% (2.56 vs 5.02 TFLOPs), with 79/90 correct versus 83/90 for the largest-model baseline (A), and met its accuracy floor in 1 of 3 task types. Its dollar cost per correct answer was about 27% of A's.
 2. **KAYL missed its own accuracy floors in math and intent by 1–2 questions:**
    - math: 25/30, against a floor of 27/30
    - intent: 27/30, against a floor of 28/30

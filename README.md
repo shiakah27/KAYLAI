@@ -171,3 +171,5 @@ Sources, revisions, build steps and data limitations are in [DATA.md](DATA.md).
 - Petrov et al., *Language Model Tokenizers Introduce Unfairness Between Languages*, NeurIPS 2023. [arXiv:2305.15425](https://arxiv.org/abs/2305.15425)
 
 KAYL's baseline E is a simple question-length proxy, not an implementation of any of these routers.
+
+Developed with the help of an AI coding assistant (Claude Code).
